@@ -2,6 +2,7 @@ package team
 
 import (
 	"github.com/sandertv/gophertunnel/minecraft/text"
+	"strings"
 	"sync"
 )
 
@@ -34,7 +35,7 @@ func LookupByName(name string) Team {
 	teamsMu.RLock()
 	defer teamsMu.RUnlock()
 
-	if id, ok := teamsId[name]; ok {
+	if id, ok := teamsId[strings.ToLower(name)]; ok {
 		return teams[id]
 	}
 
@@ -54,7 +55,7 @@ func Store(t Team) {
 	teamsMu.Lock()
 	defer teamsMu.Unlock()
 
-	teamsId[t.Data().Name()] = t.Data().Id()
+	teamsId[strings.ToLower(t.Data().Name())] = t.Data().Id()
 	teams[t.Data().Id()] = t
 }
 
@@ -64,7 +65,7 @@ func Delete(id string) {
 	defer teamsMu.Unlock()
 
 	if t, ok := teams[id]; ok {
-		delete(teamsId, t.Data().Name())
+		delete(teamsId, strings.ToLower(t.Data().Name()))
 		delete(teams, id)
 	}
 }
