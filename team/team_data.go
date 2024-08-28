@@ -39,3 +39,23 @@ func (m *TeamData) Members() map[string]*member.TeamMember {
 
 	return m.members
 }
+
+func ParseTeamData(data map[string]interface{}) TeamData {
+	id, ok := data["_id"].(string)
+	if id == "" || !ok {
+		panic("No id")
+	}
+	
+	name, ok := data["name"].(string)
+	if name == "" || !ok {
+		panic("Exception")
+	}
+
+	ownership, ok := data["ownership"].(string)
+	members, ok := data["members"].(map[string]string)
+
+	bal, ok := data["balance"].(int64)
+	points, ok := data["points"].(int64)
+
+	// TODO: Wrap team data
+}
