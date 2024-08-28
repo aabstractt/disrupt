@@ -4,7 +4,7 @@ import "go.mongodb.org/mongo-driver/mongo"
 
 type Repository[T any] interface {
 	// Insert inserts a new value or update into the repository
-	Insert(v T) (*mongo.InsertOneResult, error)
+	Insert(v T) (*mongo.UpdateResult, error)
 
 	// Delete deletes a value by its ID
 	Delete(id string) (*mongo.DeleteResult, error)

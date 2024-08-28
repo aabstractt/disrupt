@@ -20,14 +20,13 @@ type Team interface {
 	// Type returns the name of the monitor
 	Type() string
 
-	// Data returns the team's data
-	Data() *TeamData
+	// Data returns the team's tracker
+	Tracker() *Tracker
 
-	// Load loads the monitor's configuration from a map
-	Load(data map[string]interface{}) error
+	Unmarshal(data map[string]interface{}) error
 
-	// Save saves the monitor's configuration to a map
-	Save() (map[string]interface{}, error)
+	// Marshal returns the team's tracker as a map
+	Marshal() (map[string]interface{}, error)
 }
 
 // LookupByName returns the team with the given name
@@ -55,8 +54,8 @@ func Store(t Team) {
 	teamsMu.Lock()
 	defer teamsMu.Unlock()
 
-	teamsId[strings.ToLower(t.Data().Name())] = t.Data().Id()
-	teams[t.Data().Id()] = t
+	teamsId[strings.ToLower(t.Tracker().Name())] = t.Tracker().Id()
+	teams[t.Tracker().Id()] = t
 }
 
 // Delete removes the team from the cache
@@ -65,7 +64,7 @@ func Delete(id string) {
 	defer teamsMu.Unlock()
 
 	if t, ok := teams[id]; ok {
-		delete(teamsId, strings.ToLower(t.Data().Name()))
+		delete(teamsId, strings.ToLower(t.Tracker().Name()))
 		delete(teams, id)
 	}
 }

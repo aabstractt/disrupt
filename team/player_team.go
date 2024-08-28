@@ -2,21 +2,22 @@ package team
 
 import (
 	"errors"
+	"sync"
+
 	"github.com/bitrule/hcteams/repository"
 	"github.com/bitrule/hcteams/team/tickable"
-	"sync"
 )
 
 var (
-	playersMu   sync.RWMutex
-	playersTeam = make(map[string]*PlayerTeam)
+	membersMu sync.RWMutex
+	members   = make(map[string]*PlayerTeam)
 
-	repo repository.Repository[PlayerTeam]
+	repo repository.Repository[Team]
 )
 
 // PlayerTeam represents a team of players that contains a DTR tick and a bit more
 type PlayerTeam struct {
-	data *TeamData
+	tracker *Tracker
 
 	dtr *tickable.DTRTick
 }
@@ -26,9 +27,9 @@ func (m *PlayerTeam) Type() string {
 	return "Player"
 }
 
-// Data returns the team's data
-func (m *PlayerTeam) Data() *TeamData {
-	return m.data
+// Data returns the team's tracker
+func (m *PlayerTeam) Tracker() *Tracker {
+	return m.tracker
 }
 
 // DTR returns the DTR tick of the team
@@ -42,7 +43,7 @@ func (m *PlayerTeam) Disband() error {
 		return errors.New("missing repository")
 	}
 
-	if r, err := repo.Delete(m.data.Id()); err != nil || r.DeletedCount == 0 {
+	if r, err := repo.Delete(m.tracker.Id()); err != nil || r.DeletedCount == 0 {
 		if err != nil {
 			return errors.Join(errors.New("failed to disband the team: "), err)
 		}
@@ -50,28 +51,28 @@ func (m *PlayerTeam) Disband() error {
 		return errors.New("failed to disband the team")
 	}
 
-	playersMu.Lock()
+	// membersMu.Lock() helps to prevent deadlocks
+	membersMu.Lock()
 
-	// I use the function to prevent a deadlock
-	for _, member := range m.data.Members() {
-		delete(playersTeam, member.XUID())
+	for xuid, _ := range m.tracker.Members() {
+		delete(members, xuid)
 	}
 
-	playersMu.Unlock()
+	membersMu.Unlock()
 
 	return errors.New("not implemented")
 }
 
 // Load loads the monitor's configuration from a map
-func (m *PlayerTeam) Load(data map[string]interface{}) error {
+func (m *PlayerTeam) Unmarshal(data map[string]interface{}) error {
 	dtrData, ok := data["dtr"].(map[string]interface{})
 	if !ok {
-		return errors.New("missing DTR data")
+		return errors.New("missing DTR tracker")
 	}
 
 	dtr, err := tickable.UnmarshalDTR(dtrData)
 	if err != nil {
-		return errors.Join(errors.New("failed to unmarshal DTR data: "), err)
+		return errors.Join(errors.New("failed to unmarshal DTR tracker: "), err)
 	}
 
 	m.dtr = dtr
@@ -80,7 +81,7 @@ func (m *PlayerTeam) Load(data map[string]interface{}) error {
 }
 
 // Save saves the monitor's configuration to a map
-func (m *PlayerTeam) Save() (map[string]interface{}, error) {
+func (m *PlayerTeam) Marshal() (map[string]interface{}, error) {
 	if m.dtr == nil {
 		return nil, errors.New("missing DTR tick")
 	}
@@ -90,14 +91,20 @@ func (m *PlayerTeam) Save() (map[string]interface{}, error) {
 
 // LookupByPlayer returns the team of the player with the given source XUID
 func LookupByPlayer(sourceXuid string) *PlayerTeam {
-	playersMu.RLock()
-	defer playersMu.RUnlock()
+	membersMu.RLock()
+	defer membersMu.RUnlock()
 
-	return playersTeam[sourceXuid]
+	return members[sourceXuid]
 }
 
-func Repository() repository.Repository[PlayerTeam] {
+func Repository() repository.Repository[Team] {
 	return repo
+}
+
+func EmptyPlayer(tracker *Tracker) *PlayerTeam {
+	return &PlayerTeam{
+		tracker: tracker,
+	}
 }
 
 func Hook() {
@@ -106,11 +113,28 @@ func Hook() {
 	}
 
 	repo = repository.NewMongoDB(
-		func(data map[string]interface{}) (*PlayerTeam, error) {
+		func(data map[string]interface{}) (Team, error) {
+			trackData, ok := data["tracker"].(map[string]interface{})
+			if !ok {
+				return nil, errors.New("missing team tracker")
+			}
 
+			track := &Tracker{}
+			if err := track.Unmarshal(trackData); err != nil {
+				return nil, errors.Join(errors.New("failed to unmarshal team tracker: "), err)
+			}
+
+			t := &PlayerTeam{
+				tracker: track,
+			}
+			if err := t.Unmarshal(data); err != nil {
+				return nil, errors.Join(errors.New("failed to unmarshal player team: "), err)
+			}
+
+			return t, nil
 		},
-		func(t *PlayerTeam) (map[string]interface{}, error) {
-			return t.Save()
+		func(t Team) (map[string]interface{}, error) {
+			return t.Marshal()
 		},
 		"teams",
 	)
