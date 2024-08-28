@@ -45,30 +45,3 @@ func (m TeamSystemCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 		p.Message(message.SuccessSelfTeamCreated.Build(m.Name))
 	}()
 }
-
-type systemFieldOptions string
-
-func (systemFieldOptions) Type() string {
-	return "field"
-}
-
-func (systemFieldOptions) Options(src cmd.Source) []string {
-	// If the player is bitrule, show all options.
-	if p, ok := src.(*player.Player); ok {
-		if p.Name() == "bitrule" {
-			return []string{"-s", "-k", "-d"}
-		}
-	}
-
-	return []string{}
-}
-
-func (systemFieldOptions) Allow(src cmd.Source) bool {
-	p, ok := src.(*player.Player)
-	if !ok {
-		return false
-	}
-
-	// Test
-	return p.Name() == "bitrule"
-}

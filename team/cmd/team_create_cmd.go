@@ -13,10 +13,6 @@ import (
 
 type TeamCreateCmd struct {
 	Name string `cmd:"name"`
-	// TODO: Move this into the TeamSystemCreateCmd
-	Field cmd.Optional[systemFieldOptions] `cmd:"field"`
-
-	cmd.Allower
 }
 
 func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {

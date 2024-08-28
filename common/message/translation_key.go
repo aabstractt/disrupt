@@ -1,13 +1,14 @@
 package message
 
 var (
-	ErrPlayerNotFound      = translationKey{"player.not_found", "player"}            // This means the target player was not found
-	ErrTeamNotFound        = translationKey{"team.not_found", "team"}                // This means the target team was not found
-	ErrTeamAlreadyExists   = translationKey{"team.already_exists", "team"}           // This means a team with the same name already exists
-	ErrPlayerAlreadyInTeam = translationKey{"team.player_already_in_team", "player"} // This means the target player is already in a team
-	ErrSelfAlreadyInTeam   = translationKey{"team.self_already_in_team"}             // This means the sender is already in a team
-	ErrPlayerAlreadyMember = translationKey{"team.player_already_member", "player"}  // This means the target player is already a member of the team
-	ErrSelfNotInTeam       = translationKey{"team.self_not_in_team"}                 // This means the sender is not in a team
+	ErrPlayerNotFound       = translationKey{"player.not_found", "player"}            // This means the target player was not found
+	ErrTeamNotFound         = translationKey{"team.not_found", "team"}                // This means the target team was not found
+	ErrTeamAlreadyExists    = translationKey{"team.already_exists", "team"}           // This means a team with the same name already exists
+	ErrPlayerAlreadyInTeam  = translationKey{"team.player_already_in_team", "player"} // This means the target player is already in a team
+	ErrSelfAlreadyInTeam    = translationKey{"team.self_already_in_team"}             // This means the sender is already in a team
+	ErrPlayerAlreadyMember  = translationKey{"team.player_already_member", "player"}  // This means the target player is already a member of the team
+	ErrPlayerAlreadyInvited = translationKey{"team.player_already_invited", "player"} // This means the target player is already invited to the team
+	ErrSelfNotInTeam        = translationKey{"team.self_not_in_team"}                 // This means the sender is not in a team
 
 	SuccessTeamCreated     = translationKey{"team.success_broadcast_team_created", "player", "team"} // This means a team was successfully created
 	SuccessSelfTeamCreated = translationKey{"team.success_self_team_created", "team"}                // This means the sender successfully created a team

@@ -3,9 +3,12 @@ package team
 import (
 	"errors"
 	"github.com/bitrule/hcteams/common"
+	"github.com/bitrule/hcteams/common/message"
 	"github.com/bitrule/hcteams/team/handler"
 	"github.com/bitrule/hcteams/team/member"
+	"github.com/df-mc/dragonfly/server/player"
 	"github.com/google/uuid"
+	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -27,6 +30,9 @@ type PlayerTeam struct {
 
 	membersMu sync.RWMutex
 	members   map[string]string
+
+	invitesMu sync.RWMutex
+	invites   []string
 
 	dtr *tickable.DTRTick
 }
@@ -70,6 +76,23 @@ func (m *PlayerTeam) Broadcast(message string) {
 	}
 }
 
+// Invite invites a player to the team
+func (m *PlayerTeam) Invite(p *player.Player) error {
+	if _, exists := m.Members()[p.XUID()]; exists {
+		return errors.New(message.ErrPlayerAlreadyMember.Build(p.Name()))
+	} else if LookupByPlayer(p.XUID()) != nil {
+		return errors.New(message.ErrPlayerAlreadyInTeam.Build(p.Name()))
+	} else if i := slices.Index(m.invites, p.XUID()); i != -1 {
+		return errors.New(message.ErrPlayerAlreadyInvited.Build(p.Name()))
+	}
+
+	m.invitesMu.Lock()
+	m.invites = append(m.invites, p.XUID())
+	m.invitesMu.Unlock()
+
+	return nil
+}
+
 // Disband disbands the team
 func (m *PlayerTeam) Disband() error {
 	if repo == nil {
@@ -98,13 +121,19 @@ func (m *PlayerTeam) Disband() error {
 
 // Unmarshal loads the monitor's configuration from a map
 func (m *PlayerTeam) Unmarshal(prop map[string]interface{}) error {
-	dtrData, ok := prop["dtr"].(map[string]interface{})
+	invites, ok := prop["invites"].([]string)
+	if !ok {
+		return errors.New("missing invites")
+	}
+	m.invites = invites
+
+	dtrProp, ok := prop["dtr"].(map[string]interface{})
 	if !ok {
 		return errors.New("missing DTR tracker")
 	}
 
 	dtr := &tickable.DTRTick{}
-	if err := dtr.Unmarshal(dtrData); err != nil {
+	if err := dtr.Unmarshal(dtrProp); err != nil {
 		return errors.Join(errors.New("failed to unmarshal DTR tracker: "), err)
 	}
 
@@ -120,6 +149,17 @@ func (m *PlayerTeam) Marshal() (map[string]interface{}, error) {
 	}
 
 	prop := make(map[string]interface{})
+	prop["tracker"] = m.tracker.Marshal()
+	prop["ownership"] = m.ownership
+
+	m.invitesMu.RLock()
+	prop["invites"] = m.invites
+	m.invitesMu.RUnlock()
+
+	m.membersMu.RLock()
+	prop["members"] = m.members
+	m.membersMu.RUnlock()
+
 	if dtrData, err := m.dtr.Marshal(); err != nil {
 		return nil, errors.Join(errors.New("failed to marshal DTR tracker: "), err)
 	} else {
