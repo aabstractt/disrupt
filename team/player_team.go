@@ -62,6 +62,14 @@ func (m *PlayerTeam) DTR() *tickable.DTRTick {
 	return m.dtr
 }
 
+func (m *PlayerTeam) Broadcast(message string) {
+	for xuid := range m.Members() {
+		if p, ok := common.SRV.PlayerByXUID(xuid); ok {
+			p.Message(message)
+		}
+	}
+}
+
 // Disband disbands the team
 func (m *PlayerTeam) Disband() error {
 	if repo == nil {
