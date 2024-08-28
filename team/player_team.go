@@ -2,7 +2,12 @@ package team
 
 import (
 	"errors"
+	"github.com/bitrule/hcteams/common"
+	"github.com/bitrule/hcteams/team/handler"
+	"github.com/bitrule/hcteams/team/member"
+	"github.com/google/uuid"
 	"sync"
+	"sync/atomic"
 
 	"github.com/bitrule/hcteams/repository"
 	"github.com/bitrule/hcteams/team/tickable"
@@ -10,26 +15,46 @@ import (
 
 var (
 	membersMu sync.RWMutex
-	members   = make(map[string]*PlayerTeam)
-
-	repo repository.Repository[Team]
+	membersId = make(map[string]string)
 )
 
 // PlayerTeam represents a team of players that contains a DTR tick and a bit more
 type PlayerTeam struct {
 	tracker *Tracker
+	handler handler.Handler
+
+	ownership string
+
+	membersMu sync.RWMutex
+	members   map[string]string
 
 	dtr *tickable.DTRTick
 }
 
-// Type returns the name of the monitor
-func (m *PlayerTeam) Type() string {
-	return "Player"
-}
-
-// Data returns the team's tracker
+// Tracker returns the team's tracker
 func (m *PlayerTeam) Tracker() *Tracker {
 	return m.tracker
+}
+
+// Handle sets the team's handler
+func (m *PlayerTeam) Handle(h handler.Handler) {
+	m.handler = h
+}
+
+// Handler returns the team's handler
+func (m *PlayerTeam) Handler() handler.Handler {
+	return m.handler
+}
+
+func (m *PlayerTeam) Ownership() string {
+	return m.ownership
+}
+
+func (m *PlayerTeam) Members() map[string]string {
+	m.membersMu.RLock()
+	defer m.membersMu.RUnlock()
+
+	return m.members
 }
 
 // DTR returns the DTR tick of the team
@@ -54,8 +79,8 @@ func (m *PlayerTeam) Disband() error {
 	// membersMu.Lock() helps to prevent deadlocks
 	membersMu.Lock()
 
-	for xuid, _ := range m.tracker.Members() {
-		delete(members, xuid)
+	for xuid := range m.Members() {
+		delete(membersId, xuid)
 	}
 
 	membersMu.Unlock()
@@ -63,15 +88,15 @@ func (m *PlayerTeam) Disband() error {
 	return errors.New("not implemented")
 }
 
-// Load loads the monitor's configuration from a map
-func (m *PlayerTeam) Unmarshal(data map[string]interface{}) error {
-	dtrData, ok := data["dtr"].(map[string]interface{})
+// Unmarshal loads the monitor's configuration from a map
+func (m *PlayerTeam) Unmarshal(prop map[string]interface{}) error {
+	dtrData, ok := prop["dtr"].(map[string]interface{})
 	if !ok {
 		return errors.New("missing DTR tracker")
 	}
 
-	dtr, err := tickable.UnmarshalDTR(dtrData)
-	if err != nil {
+	dtr := &tickable.DTRTick{}
+	if err := dtr.Unmarshal(dtrData); err != nil {
 		return errors.Join(errors.New("failed to unmarshal DTR tracker: "), err)
 	}
 
@@ -80,13 +105,47 @@ func (m *PlayerTeam) Unmarshal(data map[string]interface{}) error {
 	return nil
 }
 
-// Save saves the monitor's configuration to a map
+// Marshal saves the monitor's configuration to a map
 func (m *PlayerTeam) Marshal() (map[string]interface{}, error) {
 	if m.dtr == nil {
 		return nil, errors.New("missing DTR tick")
 	}
 
-	return nil, errors.New("not implemented")
+	prop := make(map[string]interface{})
+	if dtrData, err := m.dtr.Marshal(); err != nil {
+		return nil, errors.Join(errors.New("failed to marshal DTR tracker: "), err)
+	} else {
+		prop["dtr"] = dtrData
+	}
+
+	return prop, nil
+}
+
+func Empty(ownership, name, teamType string) Team {
+	tracker := &Tracker{
+		id:       uuid.New().String(),
+		name:     name,
+		teamType: teamType,
+
+		balance: atomic.Int32{},
+		points:  atomic.Int32{},
+	}
+
+	if teamType == PlayerTeamType {
+		return &PlayerTeam{
+			tracker:   tracker,
+			ownership: ownership,
+			members: map[string]string{
+				ownership: member.Leader.Name(),
+			},
+		}
+	} else if teamType == SystemTeamType {
+		return &SystemTeam{
+			tracker: tracker,
+		}
+	}
+
+	return nil
 }
 
 // LookupByPlayer returns the team of the player with the given source XUID
@@ -94,39 +153,51 @@ func LookupByPlayer(sourceXuid string) *PlayerTeam {
 	membersMu.RLock()
 	defer membersMu.RUnlock()
 
-	return members[sourceXuid]
-}
-
-func Repository() repository.Repository[Team] {
-	return repo
-}
-
-func EmptyPlayer(tracker *Tracker) *PlayerTeam {
-	return &PlayerTeam{
-		tracker: tracker,
+	id, ok := membersId[sourceXuid]
+	if !ok {
+		return nil
 	}
+
+	t, ok := Lookup(id).(*PlayerTeam)
+	if !ok {
+		return nil
+	}
+
+	return t
 }
 
 func Hook() {
 	if repo != nil {
-		panic("repository already set")
+		common.Log.Panic("repository for teams already exists")
 	}
 
 	repo = repository.NewMongoDB(
 		func(data map[string]interface{}) (Team, error) {
-			trackData, ok := data["tracker"].(map[string]interface{})
+			trackProp, ok := data["tracker"].(map[string]interface{})
 			if !ok {
 				return nil, errors.New("missing team tracker")
 			}
 
-			track := &Tracker{}
-			if err := track.Unmarshal(trackData); err != nil {
+			tracker := &Tracker{}
+			if err := tracker.Unmarshal(trackProp); err != nil {
 				return nil, errors.Join(errors.New("failed to unmarshal team tracker: "), err)
 			}
 
-			t := &PlayerTeam{
-				tracker: track,
+			var t Team
+			if tracker.TeamType() == PlayerTeamType {
+				t = &PlayerTeam{
+					tracker: tracker,
+				}
+			} else if tracker.TeamType() == SystemTeamType {
+				t = &SystemTeam{
+					tracker: tracker,
+				}
 			}
+
+			if t == nil {
+				return nil, errors.New("invalid team type")
+			}
+
 			if err := t.Unmarshal(data); err != nil {
 				return nil, errors.Join(errors.New("failed to unmarshal player team: "), err)
 			}

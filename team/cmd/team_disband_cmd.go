@@ -24,7 +24,7 @@ func (m TeamDisbandCmd) Run(src cmd.Source, output *cmd.Output) {
 		return
 	}
 
-	if t.Tracker().Ownership() != p.XUID() {
+	if t.Ownership() != p.XUID() {
 		output.Error(text.Red + "You are not the owner of the team.")
 
 		return

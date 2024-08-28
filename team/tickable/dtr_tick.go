@@ -38,25 +38,36 @@ func (m *DTRTick) Remaining() time.Duration {
 	return time.Until(m.frozenUntil)
 }
 
-func UnmarshalDTR(data map[string]interface{}) (*DTRTick, error) {
-	value, ok := data["value"].(float32)
+// Unmarshal unmarshals the DTR tick from a map
+func (m *DTRTick) Unmarshal(prop map[string]interface{}) error {
+	value, ok := prop["value"].(float32)
 	if !ok {
-		return nil, errors.New("missing DTR value")
+		return errors.New("missing DTR value")
 	}
 
-	lastUpdated, ok := data["lastUpdated"].(int64)
+	m.value = value
+
+	lastUpdated, ok := prop["lastUpdated"].(int64)
 	if !ok {
-		return nil, errors.New("missing DTR last updated time")
+		return errors.New("missing DTR last updated time")
 	}
 
-	frozenUntil, ok := data["frozenUntil"].(int64)
+	m.lastUpdated = time.UnixMilli(lastUpdated)
+
+	frozenUntil, ok := prop["frozenUntil"].(int64)
 	if !ok {
-		return nil, errors.New("missing DTR frozen until time")
+		return errors.New("missing DTR frozen until time")
 	}
 
-	return &DTRTick{
-		value:       value,
-		lastUpdated: time.UnixMilli(lastUpdated),
-		frozenUntil: time.UnixMilli(frozenUntil),
+	m.frozenUntil = time.UnixMilli(frozenUntil)
+
+	return nil
+}
+
+func (m *DTRTick) Marshal() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"value":       m.value,
+		"lastUpdated": m.lastUpdated.UnixMilli(),
+		"frozenUntil": m.frozenUntil.UnixMilli(),
 	}, nil
 }

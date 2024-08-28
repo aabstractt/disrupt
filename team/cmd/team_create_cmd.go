@@ -10,7 +10,10 @@ import (
 )
 
 type TeamCreateCmd struct {
-	Name string `cmd:"name"`
+	Name  string                     `cmd:"name"`
+	Field cmd.Optional[FieldOptions] `cmd:"field"`
+
+	cmd.Allower
 }
 
 func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
@@ -34,9 +37,14 @@ func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 		return
 	}
 
-	go func() {
-		t := team.EmptyPlayer(team.EmptyTracker(m.Name, p.XUID()))
+	t := team.Empty(p.XUID(), m.Name, team.PlayerTeamType)
+	if t == nil {
+		output.Error(team.Prefix + text.Red + "Failed to create the team: Team is nil")
 
+		return
+	}
+
+	go func() {
 		r, err := team.Repository().Insert(t)
 		if err != nil {
 			p.Message(team.Prefix + text.Red + "Failed to create the team: " + err.Error())
@@ -59,4 +67,31 @@ func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 
 		team.Store(t)
 	}()
+}
+
+type FieldOptions string
+
+func (FieldOptions) Type() string {
+	return "field"
+}
+
+func (FieldOptions) Options(src cmd.Source) []string {
+	// If the player is bitrule, show all options.
+	if p, ok := src.(*player.Player); ok {
+		if p.Name() == "bitrule" {
+			return []string{"-s", "-k", "-d"}
+		}
+	}
+
+	return []string{}
+}
+
+func (FieldOptions) Allow(src cmd.Source) bool {
+	p, ok := src.(*player.Player)
+	if !ok {
+		return false
+	}
+
+	// Test
+	return p.Name() == "bitrule"
 }
