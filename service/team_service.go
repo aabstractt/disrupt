@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/startup/message"
 	"github.com/bitrule/hcteams/team"
@@ -46,19 +47,20 @@ func (s *TeamService) LookupByMember(xuid string) *team.PlayerTeam {
 		return nil
 	}
 
-	return s.LookupById(id).(*team.PlayerTeam)
+	if t, ok := s.LookupById(id).(*team.PlayerTeam); ok {
+		return t
+	}
+
+	panic(fmt.Sprintf("team '%s' is not an instance of '*team.PlayerTeam'", id))
 }
 
 // LookupByName looks up a team by its name.
 func (s *TeamService) LookupByName(name string) team.Team {
-	s.teamsMu.RLock()
-	defer s.teamsMu.RUnlock()
-
 	s.teamIdsMu.RLock()
 	defer s.teamIdsMu.RUnlock()
 
-	if id, ok := s.teamIds[name]; ok {
-		return s.teams[id]
+	if id, ok := s.teamIds[strings.ToLower(name)]; ok {
+		return s.LookupById(id)
 	}
 
 	return nil
