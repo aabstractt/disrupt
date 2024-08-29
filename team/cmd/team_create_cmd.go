@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/bitrule/hcteams/common/message"
 	"github.com/bitrule/hcteams/service"
-	"github.com/df-mc/dragonfly/server/player/chat"
 	"strings"
 
 	"github.com/bitrule/hcteams/team"
@@ -30,34 +29,7 @@ func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 		output.Error(text.Red + "Name cannot be longer than 16 characters.")
 	} else if len(m.Name) < 3 {
 		output.Error(text.Red + "Name cannot be shorter than 3 characters.")
+	} else {
+		go service.Team().Create(p, m.Name, team.PlayerTeamType)
 	}
-
-	// If there are any errors, prevent creating the team.
-	if output.ErrorCount() > 0 {
-		return
-	}
-
-	t := team.Empty(p.XUID(), m.Name, team.PlayerTeamType)
-	if t == nil {
-		output.Error(team.Prefix + text.Red + "Failed to create the team: Team is nil")
-
-		return
-	}
-
-	go func() {
-		if err := team.PostCreate(t); err != nil {
-			p.Message(team.Prefix + text.Red + "Failed to create the team: " + err.Error())
-
-			return
-		}
-
-		_, err := chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), m.Name))
-		if err != nil {
-			p.Message(team.Prefix + text.Red + "Failed to broadcast team creation: " + err.Error())
-
-			return
-		}
-
-		p.Message(message.SuccessSelfTeamCreated.Build(m.Name))
-	}()
 }

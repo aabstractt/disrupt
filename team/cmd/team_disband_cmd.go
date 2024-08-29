@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/bitrule/hcteams/service"
 	"github.com/bitrule/hcteams/team"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"
@@ -17,7 +18,7 @@ func (m TeamDisbandCmd) Run(src cmd.Source, output *cmd.Output) {
 		return
 	}
 
-	t := team.LookupByPlayer(p.XUID())
+	t := service.Team().LookupByMember(p.XUID())
 	if t == nil {
 		output.Error(text.Red + "You are not in a team.")
 

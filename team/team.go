@@ -1,7 +1,6 @@
 package team
 
 import (
-	"errors"
 	"github.com/bitrule/hcteams/repository"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 	"strings"
@@ -31,50 +30,6 @@ type Team interface {
 	Unmarshal(prop map[string]interface{}) error
 	// Marshal returns the team's tracker as a map
 	Marshal() (map[string]interface{}, error)
-}
-
-// Repository returns the repository for the teams
-func Repository() repository.Repository[Team] {
-	return repo
-}
-
-func PostCreate(t Team) error {
-	if repo == nil {
-		return errors.New("missing repository")
-	}
-
-	r, err := repo.Insert(t)
-	if err != nil {
-		return err
-	}
-
-	// TODO: Maybe this going to be a problem
-	if r.UpsertedID == nil {
-		return errors.New("upserted ID is nil")
-	}
-
-	if r.UpsertedID != t.Tracker().Id() {
-		return errors.New("ID mismatch")
-	}
-
-	Store(t)
-
-	return nil
-}
-
-// LookupByName returns the team with the given name
-func LookupByName(name string) Team {
-	teamsMu.RLock()
-	defer teamsMu.RUnlock()
-
-	teamsIdMu.RLock()
-	defer teamsIdMu.RUnlock()
-
-	if id, ok := teamsId[strings.ToLower(name)]; ok {
-		return teams[id]
-	}
-
-	return nil
 }
 
 // Lookup returns the team with the given ID

@@ -3,10 +3,8 @@ package team
 import (
 	"errors"
 	"github.com/bitrule/hcteams/common"
-	"github.com/bitrule/hcteams/common/message"
 	"github.com/bitrule/hcteams/team/handler"
 	"github.com/bitrule/hcteams/team/member"
-	"github.com/df-mc/dragonfly/server/player"
 	"github.com/google/uuid"
 	"slices"
 	"sync"
@@ -38,68 +36,92 @@ type PlayerTeam struct {
 }
 
 // Tracker returns the team's tracker
-func (m *PlayerTeam) Tracker() *Tracker {
-	return m.tracker
+func (t *PlayerTeam) Tracker() *Tracker {
+	return t.tracker
 }
 
 // Handle sets the team's handler
-func (m *PlayerTeam) Handle(h handler.Handler) {
-	m.handler = h
+func (t *PlayerTeam) Handle(h handler.Handler) {
+	t.handler = h
 }
 
 // Handler returns the team's handler
-func (m *PlayerTeam) Handler() handler.Handler {
-	return m.handler
+func (t *PlayerTeam) Handler() handler.Handler {
+	return t.handler
 }
 
-func (m *PlayerTeam) Ownership() string {
-	return m.ownership
+func (t *PlayerTeam) Ownership() string {
+	return t.ownership
 }
 
-func (m *PlayerTeam) Members() map[string]string {
-	m.membersMu.RLock()
-	defer m.membersMu.RUnlock()
+func (t *PlayerTeam) Members() map[string]string {
+	t.membersMu.RLock()
+	defer t.membersMu.RUnlock()
 
-	return m.members
+	return t.members
 }
 
-// DTR returns the DTR tick of the team
-func (m *PlayerTeam) DTR() *tickable.DTRTick {
-	return m.dtr
+func (t *PlayerTeam) HasMember(xuid string) bool {
+	t.membersMu.RLock()
+	defer t.membersMu.RUnlock()
+
+	if _, ok := t.members[xuid]; ok {
+		return true
+	}
+
+	return false
 }
 
-func (m *PlayerTeam) Broadcast(message string) {
-	for xuid := range m.Members() {
+// Broadcast sends a message to all the team members
+func (t *PlayerTeam) Broadcast(message string) {
+	for xuid := range t.Members() {
 		if p, ok := common.SRV.PlayerByXUID(xuid); ok {
 			p.Message(message)
 		}
 	}
 }
 
-// Invite invites a player to the team
-func (m *PlayerTeam) Invite(p *player.Player) error {
-	if _, exists := m.Members()[p.XUID()]; exists {
-		return errors.New(message.ErrPlayerAlreadyMember.Build(p.Name()))
-	} else if LookupByPlayer(p.XUID()) != nil {
-		return errors.New(message.ErrPlayerAlreadyInTeam.Build(p.Name()))
-	} else if i := slices.Index(m.invites, p.XUID()); i != -1 {
-		return errors.New(message.ErrPlayerAlreadyInvited.Build(p.Name()))
+// DTR returns the DTR tick of the team
+func (t *PlayerTeam) DTR() *tickable.DTRTick {
+	return t.dtr
+}
+
+// AddInvite adds an invitation to the team
+func (t *PlayerTeam) AddInvite(xuid string) {
+	t.invitesMu.Lock()
+	t.invites = append(t.invites, xuid)
+	t.invitesMu.Unlock()
+}
+
+// RemoveInvite removes an invite from the team
+func (t *PlayerTeam) RemoveInvite(xuid string) {
+	t.invitesMu.Lock()
+	defer t.invitesMu.Unlock()
+
+	if i := slices.Index(t.invites, xuid); i != -1 {
+		t.invites = append(t.invites[:i], t.invites[i+1:]...)
+	}
+}
+
+// HasInvite checks if the team has an invitation for a player
+func (t *PlayerTeam) HasInvite(xuid string) bool {
+	t.invitesMu.RLock()
+	defer t.invitesMu.RUnlock()
+
+	if i := slices.Index(t.invites, xuid); i != -1 {
+		return true
 	}
 
-	m.invitesMu.Lock()
-	m.invites = append(m.invites, p.XUID())
-	m.invitesMu.Unlock()
-
-	return nil
+	return false
 }
 
 // Disband disbands the team
-func (m *PlayerTeam) Disband() error {
+func (t *PlayerTeam) Disband() error {
 	if repo == nil {
 		return errors.New("missing repository")
 	}
 
-	if r, err := repo.Delete(m.tracker.Id()); err != nil || r.DeletedCount == 0 {
+	if r, err := repo.Delete(t.tracker.Id()); err != nil || r.DeletedCount == 0 {
 		if err != nil {
 			return errors.Join(errors.New("failed to disband the team: "), err)
 		}
@@ -110,7 +132,7 @@ func (m *PlayerTeam) Disband() error {
 	// membersMu.Lock() helps to prevent deadlocks
 	membersMu.Lock()
 
-	for xuid := range m.Members() {
+	for xuid := range t.Members() {
 		delete(membersId, xuid)
 	}
 
@@ -120,12 +142,12 @@ func (m *PlayerTeam) Disband() error {
 }
 
 // Unmarshal loads the monitor's configuration from a map
-func (m *PlayerTeam) Unmarshal(prop map[string]interface{}) error {
+func (t *PlayerTeam) Unmarshal(prop map[string]interface{}) error {
 	invites, ok := prop["invites"].([]string)
 	if !ok {
 		return errors.New("missing invites")
 	}
-	m.invites = invites
+	t.invites = invites
 
 	dtrProp, ok := prop["dtr"].(map[string]interface{})
 	if !ok {
@@ -137,30 +159,30 @@ func (m *PlayerTeam) Unmarshal(prop map[string]interface{}) error {
 		return errors.Join(errors.New("failed to unmarshal DTR tracker: "), err)
 	}
 
-	m.dtr = dtr
+	t.dtr = dtr
 
 	return nil
 }
 
 // Marshal saves the monitor's configuration to a map
-func (m *PlayerTeam) Marshal() (map[string]interface{}, error) {
-	if m.dtr == nil {
+func (t *PlayerTeam) Marshal() (map[string]interface{}, error) {
+	if t.dtr == nil {
 		return nil, errors.New("missing DTR tick")
 	}
 
 	prop := make(map[string]interface{})
-	prop["tracker"] = m.tracker.Marshal()
-	prop["ownership"] = m.ownership
+	prop["tracker"] = t.tracker.Marshal()
+	prop["ownership"] = t.ownership
 
-	m.invitesMu.RLock()
-	prop["invites"] = m.invites
-	m.invitesMu.RUnlock()
+	t.invitesMu.RLock()
+	prop["invites"] = t.invites
+	t.invitesMu.RUnlock()
 
-	m.membersMu.RLock()
-	prop["members"] = m.members
-	m.membersMu.RUnlock()
+	t.membersMu.RLock()
+	prop["members"] = t.members
+	t.membersMu.RUnlock()
 
-	if dtrData, err := m.dtr.Marshal(); err != nil {
+	if dtrData, err := t.dtr.Marshal(); err != nil {
 		return nil, errors.Join(errors.New("failed to marshal DTR tracker: "), err)
 	} else {
 		prop["dtr"] = dtrData
@@ -196,29 +218,12 @@ func Empty(ownership, name, teamType string) Team {
 	return nil
 }
 
-// LookupByPlayer returns the team of the player with the given source XUID
-func LookupByPlayer(sourceXuid string) *PlayerTeam {
-	membersMu.RLock()
-	defer membersMu.RUnlock()
-
-	id, ok := membersId[sourceXuid]
-	if !ok {
-		return nil
-	}
-
-	t, ok := Lookup(id).(*PlayerTeam)
-	if !ok {
-		return nil
-	}
-
-	return t
-}
-
 func Hook() {
 	if repo != nil {
 		common.Log.Panic("repository for teams already exists")
 	}
 
+	// TODO: Optimize this a many bit
 	repo = repository.NewMongoDB(
 		func(data map[string]interface{}) (Team, error) {
 			trackProp, ok := data["tracker"].(map[string]interface{})
