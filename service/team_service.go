@@ -15,11 +15,11 @@ import (
 type TeamService struct {
 	repository repository.Repository[team.Team]
 
-	valuesMu sync.RWMutex
-	values   map[string]team.Team
+	teamsMu sync.RWMutex
+	teams   map[string]team.Team
 
-	identifiersMu sync.RWMutex
-	identifiers   map[string]string
+	teamIdsMu sync.RWMutex
+	teamIds   map[string]string
 
 	membersMu sync.RWMutex
 	members   map[string]string
@@ -40,14 +40,14 @@ func (s *TeamService) LookupByMember(xuid string) *team.PlayerTeam {
 
 // LookupByName looks up a team by its name.
 func (s *TeamService) LookupByName(name string) team.Team {
-	s.valuesMu.RLock()
-	defer s.valuesMu.RUnlock()
+	s.teamsMu.RLock()
+	defer s.teamsMu.RUnlock()
 
-	s.identifiersMu.RLock()
-	defer s.identifiersMu.RUnlock()
+	s.teamIdsMu.RLock()
+	defer s.teamIdsMu.RUnlock()
 
-	if id, ok := s.identifiers[name]; ok {
-		return s.values[id]
+	if id, ok := s.teamIds[name]; ok {
+		return s.teams[id]
 	}
 
 	return nil
@@ -55,10 +55,10 @@ func (s *TeamService) LookupByName(name string) team.Team {
 
 // LookupById looks up a team by its ID.
 func (s *TeamService) LookupById(id string) team.Team {
-	s.valuesMu.RLock()
-	defer s.valuesMu.RUnlock()
+	s.teamsMu.RLock()
+	defer s.teamsMu.RUnlock()
 
-	if t, ok := s.values[id]; ok {
+	if t, ok := s.teams[id]; ok {
 		return t
 	}
 
@@ -67,15 +67,15 @@ func (s *TeamService) LookupById(id string) team.Team {
 
 // Delete deletes a team by its ID.
 func (s *TeamService) Delete(id string) {
-	s.valuesMu.Lock()
-	defer s.valuesMu.Unlock()
+	s.teamsMu.Lock()
+	defer s.teamsMu.Unlock()
 
-	s.identifiersMu.Lock()
-	defer s.identifiersMu.Unlock()
+	s.teamIdsMu.Lock()
+	defer s.teamIdsMu.Unlock()
 
-	if t, ok := s.values[id]; ok {
-		delete(s.values, id)
-		delete(s.identifiers, strings.ToLower(t.Tracker().Name()))
+	if t, ok := s.teams[id]; ok {
+		delete(s.teams, id)
+		delete(s.teamIds, strings.ToLower(t.Tracker().Name()))
 	}
 }
 
@@ -97,13 +97,13 @@ func (s *TeamService) CacheMember(xuid, teamId string) {
 
 // cache caches a team.
 func (s *TeamService) cache(t team.Team) {
-	s.valuesMu.Lock()
-	s.values[t.Tracker().Id()] = t
-	s.valuesMu.Unlock()
+	s.teamsMu.Lock()
+	s.teams[t.Tracker().Id()] = t
+	s.teamsMu.Unlock()
 
-	s.identifiersMu.Lock()
-	s.identifiers[strings.ToLower(t.Tracker().Name())] = t.Tracker().Id()
-	s.identifiersMu.Unlock()
+	s.teamIdsMu.Lock()
+	s.teamIds[strings.ToLower(t.Tracker().Name())] = t.Tracker().Id()
+	s.teamIdsMu.Unlock()
 }
 
 // Create creates a team.
@@ -177,7 +177,7 @@ func Team() *TeamService {
 }
 
 var teamService = &TeamService{
-	values:      make(map[string]team.Team),
-	identifiers: make(map[string]string),
-	members:     make(map[string]string),
+	teams:   make(map[string]team.Team),
+	teamIds: make(map[string]string),
+	members: make(map[string]string),
 }
