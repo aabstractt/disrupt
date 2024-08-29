@@ -1,5 +1,5 @@
 player:
-  not_found: "&4<player> &cnot found."
+  not_found: "&4<player>&c not found."
 
 team:
   not_found: "&cTeam &4<team>&c not found."

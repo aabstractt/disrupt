@@ -9,6 +9,7 @@ import (
 
 func main() {
 	log := logrus.New()
+
 	if err := service.World().Hook(); err != nil {
 		log.WithError(err).Panic("failed to hook world service")
 	}

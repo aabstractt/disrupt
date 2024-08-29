@@ -9,3 +9,4 @@ import (
 var Log logrus.Logger
 var SRV server.Server
 var Mongo *mongo.Client
+var Config TeamsConfig

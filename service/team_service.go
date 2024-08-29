@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/startup/message"
 	"github.com/bitrule/hcteams/team"
 	"github.com/df-mc/dragonfly/server/player"
@@ -17,7 +18,8 @@ import (
 var IDKey = "_id"
 
 type TeamService struct {
-	col *mongo.Collection
+	conf startup.TeamsConfig
+	col  *mongo.Collection
 
 	teamsMu sync.RWMutex
 	teams   map[string]team.Team
@@ -196,6 +198,10 @@ func (s *TeamService) Save(t team.Team) error {
 	}
 
 	return nil
+}
+
+func (s *TeamService) Config() startup.TeamsConfig {
+	return s.conf
 }
 
 // Team returns the team service.
