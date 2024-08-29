@@ -23,6 +23,8 @@ var (
 
 	SuccessSelfTeamDisband = translationKey{"team.success_self_team_disband", "team"}      // This means the sender successfully disbanded their team
 	SuccessTeamDisband     = translationKey{"team.success_team_disband", "leader", "team"} // This means a team was successfully disbanded
+
+	SuccessTeamMemberLeft = translationKey{"team.success_team_member_left", "player"} // This means a player successfully left the team
 )
 
 type translationKey []string

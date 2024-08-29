@@ -25,5 +25,7 @@ func main() {
 		tcmd.TeamCreateCmd{},
 		tcmd.TeamInviteCmd{},
 		tcmd.TeamDisbandCmd{},
+		tcmd.TeamLeaveCmd{},
+		tcmd.TeamAcceptCmd{},
 	))
 }
