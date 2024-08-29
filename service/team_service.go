@@ -134,6 +134,9 @@ func (s *TeamService) Create(p *player.Player, name, teamType string) {
 }
 
 // Invite invites a player to a team.
+// This function will add the player to the team's invites and broadcast a message to the player and the team.
+// The target can accept the invite by using the '/team accept' command or decline it by using the '/team decline' command.
+// I think this function should be removed because its only used one time in the codebase.
 func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
 	if t.HasMember(p.XUID()) {
 		return errors.New(message.ErrPlayerAlreadyMember.Build(p.Name()))
@@ -151,6 +154,10 @@ func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
 	return nil
 }
 
+// Disband disbands a team
+// This function will delete the team from the repository and broadcast a message to all the members.
+// also, it will delete all the members from the team and the service.
+// Use this function into a goroutine to prevent blocking the main thread.
 func (s *TeamService) Disband(t *team.PlayerTeam) error {
 	if s.repository == nil {
 		return errors.New("missing repository")
