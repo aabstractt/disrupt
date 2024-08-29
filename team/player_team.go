@@ -55,6 +55,17 @@ func (t *PlayerTeam) HasMember(xuid string) bool {
 	return false
 }
 
+func (t *PlayerTeam) Role(xuid string) Role {
+	t.membersMu.RLock()
+	defer t.membersMu.RUnlock()
+
+	if role, ok := t.members[xuid]; ok {
+		return Role(role)
+	}
+
+	return Member
+}
+
 // Broadcast sends a message to all the team members
 func (t *PlayerTeam) Broadcast(message string) {
 	for xuid := range t.Members() {

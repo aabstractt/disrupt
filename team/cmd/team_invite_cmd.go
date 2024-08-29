@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/bitrule/hcteams/common/message"
 	"github.com/bitrule/hcteams/service"
+	"github.com/bitrule/hcteams/team"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"
 )
@@ -19,6 +20,8 @@ func (m TeamInviteCmd) Run(src cmd.Source, output *cmd.Output) {
 		output.Error("No targets specified.")
 	} else if t := service.Team().LookupByMember(s.XUID()); t == nil {
 		output.Error(message.ErrSelfNotInTeam.Build())
+	} else if t.Role(s.XUID()).LowestThan(team.Officer) { // Check if the player is an officer or higher, if not, return an error
+		output.Error(message.ErrRoleLowestThanLeader.Build())
 	} else {
 		// lt means lazy target
 		for _, lt := range m.Targets {
