@@ -24,5 +24,7 @@ func (c TeamLeaveCmd) Run(src cmd.Source, output *cmd.Output) {
 
 		service.Team().DeleteMember(s.XUID())
 		t.RemoveMember(s.XUID())
+
+		s.Message(message.SuccessSelfLeftTeam.Build(t.Tracker().Name()))
 	}
 }

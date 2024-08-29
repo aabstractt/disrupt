@@ -1,0 +1,31 @@
+player:
+  not_found: "&4<player> &cnot found."
+
+team:
+  not_found: "&cTeam &4<team>&c not found."
+  already_exists: "&cTeam &4<team>&c already exists."
+
+  player_already_in_team: "&4<player>&c is already in a team."
+  self_already_in_team: "&4You are already in a team."
+
+  player_not_in_team: "&4<player>&c is not in a team."
+  self_not_in_team: "&4You are not in a team."
+  self_not_leader: "&4You are not the leader of the team."
+  self_not_officer: "&4You are not an officer of the team."
+
+  player_already_member: "&4<player>&c is already a member of this team."
+  player_already_invited: "&4<player>&c is already invited to this team."
+  self_not_invited: "&4You are not invited to this team."
+
+  success_broadcast_team_created: "&eTeam &9<team>&e has been &acreated&e by &a<player>"
+  success_self_team_created: "&eYou have created team &9<team>&e."
+
+  success_team_invite_sent: "&eYou have invited &9<player>&e to join the team."
+  success_broadcast_team_invite_sent: "&9<player>&e has been invited to join the team."
+  success_team_invite_received: "&9<player>&e has invited you to join to the team &9<team>&e."
+
+  success_self_team_disband: "&eYou have disbanded the team."
+  success_team_disband: "&4<player>&c disbanded the faction!"
+
+  success_team_member_left: "&4<player>&c has left the team."
+  success_self_left_team: "&eYou have left the team."

@@ -17,14 +17,15 @@ var (
 	SuccessTeamCreated     = translationKey{"team.success_broadcast_team_created", "player", "team"} // This means a team was successfully created
 	SuccessSelfTeamCreated = translationKey{"team.success_self_team_created", "team"}                // This means the sender successfully created a team
 
-	SuccessTeamInviteSent          = translationKey{"team.success_team_invite_sent", "player"}                     // This means the sender successfully sent an invite to the target player
-	SuccessBroadcastTeamInviteSent = translationKey{"team.success_broadcast_team_invite_sent", "sender", "player"} // This means the sender successfully sent an invite to the target player
-	SuccessTeamInviteReceived      = translationKey{"team.success_team_invite_received", "sender", "team"}         // This means the target player successfully received an invite
+	SuccessTeamInviteSent          = translationKey{"team.success_team_invite_sent", "player"}                     // This means the sender successfully sent an invitation to the target player
+	SuccessBroadcastTeamInviteSent = translationKey{"team.success_broadcast_team_invite_sent", "sender", "player"} // This means the sender successfully sent an invitation to the target player
+	SuccessTeamInviteReceived      = translationKey{"team.success_team_invite_received", "sender", "team"}         // This means the target player successfully received an invitation
 
 	SuccessSelfTeamDisband = translationKey{"team.success_self_team_disband", "team"}      // This means the sender successfully disbanded their team
-	SuccessTeamDisband     = translationKey{"team.success_team_disband", "leader", "team"} // This means a team was successfully disbanded
+	SuccessTeamDisband     = translationKey{"team.success_team_disband", "player", "team"} // This means a team was successfully disbanded
 
 	SuccessTeamMemberLeft = translationKey{"team.success_team_member_left", "player"} // This means a player successfully left the team
+	SuccessSelfLeftTeam   = translationKey{"team.success_self_left_team", "team"}     // This means the sender successfully left the team
 )
 
 type translationKey []string
