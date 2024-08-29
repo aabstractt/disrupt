@@ -22,11 +22,11 @@ func (s *WorldService) LookupByName(name string) *world.World {
 	return nil
 }
 
-// Cache caches a world in the repository.
-func (s *WorldService) cache(w *world.World) {
-	s.worldsMu.Lock()
-	s.worlds[w.Name()] = w
-	s.worldsMu.Unlock()
+func (s *WorldService) Load(name string) *world.World {
+	// TODO: Create world struct and load it
+	w := world.New(name)
+	s.cache(w)
+	return w
 }
 
 // Unload unloads a world from the repository.
@@ -36,6 +36,21 @@ func (s *WorldService) Unload(w *world.World) {
 	s.worldsMu.Unlock()
 }
 
+// Cache caches a world in the repository.
+func (s *WorldService) cache(w *world.World) {
+	s.worldsMu.Lock()
+	s.worlds[w.Name()] = w
+	s.worldsMu.Unlock()
+}
+
+func (s *WorldService) Hook() error {
+
+}
+
 func World() *WorldService {
-	return &worldService
+	return worldService
+}
+
+var worldService = &WorldService{
+	worlds: make(map[string]*world.World),
 }
