@@ -124,8 +124,7 @@ func (s *TeamService) Create(p *player.Player, name, teamType string) {
 	}
 
 	if r.ModifiedCount > 0 {
-		p.Message(text.DarkRed + "An error occurred while creating the team.")
-		p.Message(text.Red + "Error: " + text.DarkRed + "Team already exists.")
+		p.Message(text.DarkRed + "An error occurred while creating the team: " + text.Red + "Team already exists.")
 
 		return
 	}

@@ -3,7 +3,6 @@ package team
 import (
 	"errors"
 	"github.com/bitrule/hcteams/common"
-	"github.com/bitrule/hcteams/team/handler"
 	"github.com/bitrule/hcteams/team/member"
 	"github.com/google/uuid"
 	"slices"
@@ -14,15 +13,9 @@ import (
 	"github.com/bitrule/hcteams/team/tickable"
 )
 
-var (
-	membersMu sync.RWMutex
-	membersId = make(map[string]string)
-)
-
 // PlayerTeam represents a team of players that contains a DTR tick and a bit more
 type PlayerTeam struct {
 	tracker *Tracker
-	handler handler.Handler
 
 	ownership string
 
@@ -38,16 +31,6 @@ type PlayerTeam struct {
 // Tracker returns the team's tracker
 func (t *PlayerTeam) Tracker() *Tracker {
 	return t.tracker
-}
-
-// Handle sets the team's handler
-func (t *PlayerTeam) Handle(h handler.Handler) {
-	t.handler = h
-}
-
-// Handler returns the team's handler
-func (t *PlayerTeam) Handler() handler.Handler {
-	return t.handler
 }
 
 func (t *PlayerTeam) Ownership() string {

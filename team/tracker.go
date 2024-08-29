@@ -2,6 +2,7 @@ package team
 
 import (
 	"errors"
+	"github.com/df-mc/dragonfly/server/block/cube"
 	"sync/atomic"
 
 	"github.com/google/uuid"
@@ -14,6 +15,8 @@ type Tracker struct {
 
 	balance atomic.Int32
 	points  atomic.Int32
+
+	cuboids map[string][]cube.BBox
 }
 
 // Id returns the team's ID
@@ -39,6 +42,11 @@ func (m *Tracker) Balance() atomic.Int32 {
 // Points returns the team's points
 func (m *Tracker) Points() atomic.Int32 {
 	return m.points
+}
+
+// Cuboids returns the team's cuboids
+func (m *Tracker) Cuboids() map[string][]cube.BBox {
+	return m.cuboids
 }
 
 // Marshal handles the serialization of the tracker struct
