@@ -121,14 +121,15 @@ func (s *TeamService) Create(p *player.Player, name, teamType string) {
 
 		p.Message(message.SuccessSelfTeamCreated.Build(name))
 
-		if _, ok := t.(*team.PlayerTeam); ok {
-			if _, err = chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), name)); err != nil {
-				p.Message(team.Prefix + text.Red + "Failed to broadcast team creation: " + err.Error())
+		_, ok := t.(*team.PlayerTeam)
+		if !ok {
+			return
+		}
 
-				return
-			}
+		s.CacheMember(p.XUID(), t.Tracker().Id())
 
-			s.CacheMember(p.XUID(), t.Tracker().Id())
+		if _, err = chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), name)); err != nil {
+			p.Message(team.Prefix + text.Red + "Failed to broadcast team creation: " + err.Error())
 		}
 	}
 }
