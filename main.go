@@ -19,7 +19,7 @@ func main() {
 
 	cmd.Register(cmd.New(
 		"team",
-		"Team commands",
+		"Manage your team. Use '/team help' for more information.",
 		[]string{"t", "f", "faction"},
 		tcmd.TeamSystemCreateCmd{},
 		tcmd.TeamCreateCmd{},

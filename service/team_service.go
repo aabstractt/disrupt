@@ -109,40 +109,28 @@ func (s *TeamService) cache(t team.Team) {
 // Create creates a team.
 // Use this function into a goroutine to prevent blocking the main thread.
 func (s *TeamService) Create(p *player.Player, name, teamType string) {
-	t := team.Empty(p.XUID(), name, teamType)
-	if t == nil {
+	if t := team.Empty(p.XUID(), name, teamType); t == nil {
 		p.Message(text.Red + "Failed to create the team: Team is nil")
-
-		return
-	}
-
-	r, err := s.repository.Insert(t)
-	if err != nil {
+	} else if r, err := s.repository.Insert(t); err != nil {
 		p.Message(text.Red + "Failed to create the team: " + err.Error())
-
-		return
-	}
-
-	if r.ModifiedCount > 0 {
+	} else if r.ModifiedCount > 0 {
 		p.Message(text.DarkRed + "An error occurred while creating the team: " + text.Red + "Team already exists.")
+	} else {
+		// Store the team in the service.
+		s.cache(t)
 
-		return
-	}
+		p.Message(message.SuccessSelfTeamCreated.Build(name))
 
-	if _, ok := t.(*team.PlayerTeam); ok {
-		if _, err = chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), name)); err != nil {
-			p.Message(team.Prefix + text.Red + "Failed to broadcast team creation: " + err.Error())
+		if _, ok := t.(*team.PlayerTeam); ok {
+			if _, err = chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), name)); err != nil {
+				p.Message(team.Prefix + text.Red + "Failed to broadcast team creation: " + err.Error())
 
-			return
+				return
+			}
+
+			s.CacheMember(p.XUID(), t.Tracker().Id())
 		}
-
-		s.CacheMember(p.XUID(), t.Tracker().Id())
 	}
-
-	p.Message(message.SuccessSelfTeamCreated.Build(name))
-
-	// Store the team in the service.
-	s.cache(t)
 }
 
 // Invite invites a player to a team.
@@ -166,23 +154,18 @@ func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
 func (s *TeamService) Disband(t *team.PlayerTeam) error {
 	if s.repository == nil {
 		return errors.New("missing repository")
-	}
-
-	u := userService.LookupByXUID(t.Ownership())
-	if u == nil {
+	} else if u := userService.LookupByXUID(t.Ownership()); u == nil {
 		return errors.New("leader not found")
-	}
-
-	if r, err := s.repository.Delete(t.Tracker().Id()); err != nil {
+	} else if r, err := s.repository.Delete(t.Tracker().Id()); err != nil {
 		return err
 	} else if r.DeletedCount == 0 {
 		return errors.New("team not found into our database")
-	}
+	} else {
+		t.Broadcast(message.SuccessBroadcastTeamDisbanded.Build(u.Name(), t.Tracker().Name()))
 
-	t.Broadcast(message.SuccessBroadcastTeamDisbanded.Build(u.Name(), t.Tracker().Name()))
-
-	for xuid := range t.Members() {
-		s.DeleteMember(xuid)
+		for xuid := range t.Members() {
+			s.DeleteMember(xuid)
+		}
 	}
 
 	return nil
