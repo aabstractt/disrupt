@@ -2,8 +2,8 @@ package service
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams/common"
 	"github.com/bitrule/hcteams/repository"
+	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/user"
 	"github.com/df-mc/dragonfly/server/player"
 	"sync"
@@ -125,7 +125,7 @@ func (s *UserService) Hook() error {
 		s.cache(u)
 	}
 
-	common.Log.Infof("Successfully loaded %d user(s)", len(s.users))
+	startup.Log.Infof("Successfully loaded %d user(s)", len(s.users))
 
 	return nil
 }

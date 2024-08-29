@@ -1,4 +1,4 @@
-package common
+package startup
 
 import (
 	"github.com/df-mc/dragonfly/server"

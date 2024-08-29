@@ -2,8 +2,8 @@ package service
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams/common/message"
 	"github.com/bitrule/hcteams/repository"
+	"github.com/bitrule/hcteams/startup/message"
 	"github.com/bitrule/hcteams/team"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"

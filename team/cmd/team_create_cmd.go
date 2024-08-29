@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/bitrule/hcteams/common/message"
 	"github.com/bitrule/hcteams/service"
+	"github.com/bitrule/hcteams/startup/message"
 	"strings"
 
 	"github.com/bitrule/hcteams/team"
