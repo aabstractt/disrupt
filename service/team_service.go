@@ -155,6 +155,13 @@ func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
 	return nil
 }
 
+// Team returns the team service.
 func Team() *TeamService {
-	return nil
+	return teamService
+}
+
+var teamService = &TeamService{
+	values:      make(map[string]team.Team),
+	identifiers: make(map[string]string),
+	members:     make(map[string]string),
 }
