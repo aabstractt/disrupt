@@ -1,16 +1,18 @@
 package service
 
 import (
+	"context"
 	"errors"
-	"github.com/bitrule/hcteams/repository"
 	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/user"
 	"github.com/df-mc/dragonfly/server/player"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"sync"
 )
 
 type UserService struct {
-	repository repository.Repository[*user.User]
+	col *mongo.Collection
 
 	usersMu sync.RWMutex
 	users   map[string]*user.User
@@ -72,11 +74,11 @@ func (s *UserService) Save(xuid string) error {
 		return errors.New("user not found")
 	}
 
-	if s.repository == nil {
+	if s.col == nil {
 		return errors.New("missing repository")
 	}
 
-	r, err := s.repository.Insert(u)
+	r, err := s.col.UpdateOne(context.Background(), bson.M{"_id": u.XUID()}, bson.M{"$set": u})
 	if err != nil {
 		return errors.Join(errors.New("failed to save the user: "), err)
 	}
@@ -90,13 +92,13 @@ func (s *UserService) Save(xuid string) error {
 
 // Create creates a user.
 func (s *UserService) Create(p *player.Player) error {
-	if s.repository == nil {
-		return errors.New("missing repository")
+	if s.col == nil {
+		return errors.New("missing mongo collection")
 	}
 
 	u := user.Empty(p.XUID(), p.Name())
 
-	r, err := s.repository.Insert(u)
+	r, err := s.col.UpdateOne(u)
 	if err != nil {
 		return errors.Join(errors.New("failed to create the user: "), err)
 	}
@@ -111,23 +113,44 @@ func (s *UserService) Create(p *player.Player) error {
 }
 
 // Hook hooks the repository to the service.
-func (s *UserService) Hook() error {
-	if s.repository != nil {
+func (s *UserService) Hook(dbname string) error {
+	if s.col != nil {
 		return errors.New("repository already hooked")
 	}
 
-	users, err := s.repository.FindAll()
+	s.col = startup.MongoDB().Database(dbname).Collection("users")
+
+	cur, err := s.col.Find(context.Background(), nil)
 	if err != nil {
 		return errors.Join(errors.New("failed to hook the repository: "), err)
 	}
 
-	for _, u := range users {
+	for cur.Next(context.Background()) {
+		var prop map[string]interface{}
+		if err := cur.Decode(&prop); err != nil {
+			return errors.Join(errors.New("failed to decode the user: "), err)
+		}
+
+		u, err := s.decode(prop)
+		if err != nil {
+			return errors.Join(errors.New("failed to decode the user: "), err)
+		}
+
 		s.cache(u)
 	}
 
 	startup.Log.Infof("Successfully loaded %d user(s)", len(s.users))
 
 	return nil
+}
+
+func (s *UserService) decode(prop map[string]interface{}) (*user.User, error) {
+	u := &user.User{}
+	if err := u.Unmarshal(prop); err != nil {
+		return nil, errors.Join(errors.New("failed to decode the user: "), err)
+	}
+
+	return u, nil
 }
 
 var userService = &UserService{
