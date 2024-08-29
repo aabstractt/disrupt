@@ -1,0 +1,23 @@
+package handler
+
+import (
+	"github.com/bitrule/hcteams/common"
+	"github.com/bitrule/hcteams/service"
+	"github.com/df-mc/dragonfly/server/player"
+)
+
+type deathHandler struct{}
+
+func (deathHandler) HandleDeath(p *player.Player) {
+	u := service.User().LookupByXUID(p.XUID())
+	if u == nil {
+		common.Log.WithField("player", p.Name()).Error("death but non known user")
+
+		return
+	}
+
+	t := service.Team().LookupByMember(p.XUID())
+	if t != nil {
+		t.DTR().UpdateRemaining(120) // Freezes DTR for 120 seconds
+	}
+}
