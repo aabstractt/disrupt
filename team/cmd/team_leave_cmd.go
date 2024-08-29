@@ -10,7 +10,7 @@ import (
 
 type TeamLeaveCmd struct{}
 
-func (c TeamLeaveCmd) Run(src cmd.Source, output *cmd.Output) {
+func (TeamLeaveCmd) Run(src cmd.Source, output *cmd.Output) {
 	if s, ok := src.(*player.Player); !ok {
 		output.Error("This command can only be run by a player.")
 	} else if t := service.Team().LookupByMember(s.XUID()); t == nil {

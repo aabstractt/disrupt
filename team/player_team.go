@@ -16,6 +16,7 @@ type PlayerTeam struct {
 	tracker *Tracker
 
 	ownership string
+	hq        HQ
 
 	membersMu sync.RWMutex
 	members   map[string]Role
@@ -33,6 +34,14 @@ func (t *PlayerTeam) Tracker() *Tracker {
 
 func (t *PlayerTeam) Ownership() string {
 	return t.ownership
+}
+
+func (t *PlayerTeam) HQ() HQ {
+	return t.hq
+}
+
+func (t *PlayerTeam) SetHQ(hq HQ) {
+	t.hq = hq
 }
 
 func (t *PlayerTeam) Members() map[string]Role {
@@ -144,25 +153,30 @@ func (t *PlayerTeam) Marshal() (map[string]interface{}, error) {
 		return nil, errors.New("missing DTR tick")
 	}
 
-	prop := make(map[string]interface{})
-	prop["tracker"] = t.tracker.Marshal()
-	prop["ownership"] = t.ownership
+	body := make(map[string]interface{})
+	body["tracker"] = t.tracker.Marshal()
+
+	if t.hq.loaded {
+		body["hq"] = t.hq.Marshal()
+	}
+
+	body["ownership"] = t.ownership
 
 	t.invitesMu.RLock()
-	prop["invites"] = t.invites
+	body["invites"] = t.invites
 	t.invitesMu.RUnlock()
 
 	t.membersMu.RLock()
-	prop["members"] = t.members
+	body["members"] = t.members
 	t.membersMu.RUnlock()
 
 	if dtrData, err := t.dtr.Marshal(); err != nil {
 		return nil, errors.Join(errors.New("failed to marshal DTR tracker: "), err)
 	} else {
-		prop["dtr"] = dtrData
+		body["dtr"] = dtrData
 	}
 
-	return prop, nil
+	return body, nil
 }
 
 func NewPlayerTeam(ownership, name string) *PlayerTeam {

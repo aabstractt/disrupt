@@ -10,7 +10,7 @@ import (
 
 type TeamDisbandCmd struct{}
 
-func (m TeamDisbandCmd) Run(src cmd.Source, output *cmd.Output) {
+func (TeamDisbandCmd) Run(src cmd.Source, output *cmd.Output) {
 	if p, ok := src.(*player.Player); !ok {
 		output.Error(text.Red + "This command can only be run by a player.")
 	} else if t := service.Team().LookupByMember(p.XUID()); t == nil {

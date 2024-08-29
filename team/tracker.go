@@ -3,6 +3,8 @@ package team
 import (
 	"errors"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/world"
+	"github.com/go-gl/mathgl/mgl64"
 	"sync/atomic"
 
 	"github.com/google/uuid"
@@ -62,6 +64,16 @@ func (t *Tracker) Option(key string) interface{} {
 // Cuboids returns the team's cuboids
 func (t *Tracker) Cuboids() map[string][]cube.BBox {
 	return t.cuboids
+}
+
+func (t *Tracker) Inside(w *world.World, vec mgl64.Vec3) bool {
+	for _, c := range t.cuboids[w.Name()] {
+		if c.Vec3Within(vec) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Marshal handles the serialization of the tracker struct
