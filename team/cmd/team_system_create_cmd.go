@@ -14,8 +14,7 @@ type TeamSystemCreateCmd struct {
 }
 
 func (m TeamSystemCreateCmd) Run(src cmd.Source, output *cmd.Output) {
-	p, ok := src.(*player.Player)
-	if !ok {
+	if p, ok := src.(*player.Player); !ok {
 		output.Error(text.Red + "This command can only be run by a player.")
 	} else if strings.TrimSpace(m.Name) == "" {
 		output.Error(team.Prefix + "Name cannot be empty.")
