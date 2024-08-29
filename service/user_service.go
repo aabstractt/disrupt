@@ -120,6 +120,11 @@ func (s *UserService) Create(p *player.Player) error {
 }
 
 func (s *UserService) First(targets []cmd.Target) *player.Player {
+	// Why this have more than one target?
+	if len(targets) > 1 {
+		return nil
+	}
+
 	for _, lt := range targets {
 		if p, ok := lt.(*player.Player); ok {
 			return p
