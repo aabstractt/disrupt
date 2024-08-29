@@ -20,7 +20,7 @@ type PlayerTeam struct {
 	ownership string
 
 	membersMu sync.RWMutex
-	members   map[string]string
+	members   map[string]Role
 
 	invitesMu sync.RWMutex
 	invites   []string
@@ -37,33 +37,41 @@ func (t *PlayerTeam) Ownership() string {
 	return t.ownership
 }
 
-func (t *PlayerTeam) Members() map[string]string {
+func (t *PlayerTeam) Members() map[string]Role {
 	t.membersMu.RLock()
 	defer t.membersMu.RUnlock()
 
 	return t.members
 }
 
-func (t *PlayerTeam) HasMember(xuid string) bool {
-	t.membersMu.RLock()
-	defer t.membersMu.RUnlock()
-
-	if _, ok := t.members[xuid]; ok {
-		return true
-	}
-
-	return false
+// AddMember adds a member to the team
+func (t *PlayerTeam) AddMember(xuid string, role Role) {
+	t.membersMu.Lock()
+	t.members[xuid] = role
+	t.membersMu.Unlock()
 }
 
-func (t *PlayerTeam) Role(xuid string) Role {
+// RemoveMember removes a member from the team
+func (t *PlayerTeam) RemoveMember(xuid string) {
+	t.membersMu.Lock()
+
+	if _, ok := t.members[xuid]; ok {
+		delete(t.members, xuid)
+	}
+
+	t.membersMu.Unlock()
+}
+
+// Member returns the role of a player in the team
+func (t *PlayerTeam) Member(xuid string) Role {
 	t.membersMu.RLock()
 	defer t.membersMu.RUnlock()
 
 	if role, ok := t.members[xuid]; ok {
-		return Role(role)
+		return role
 	}
 
-	return Member
+	return Undefined
 }
 
 // Broadcast sends a message to all the team members

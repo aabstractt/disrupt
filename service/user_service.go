@@ -119,7 +119,7 @@ func (s *UserService) Create(p *player.Player) error {
 	return nil
 }
 
-func (s *UserService) FindFirst(targets []cmd.Target) *player.Player {
+func (s *UserService) First(targets []cmd.Target) *player.Player {
 	for _, lt := range targets {
 		if p, ok := lt.(*player.Player); ok {
 			return p

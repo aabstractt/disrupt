@@ -141,7 +141,7 @@ func (s *TeamService) Create(p *player.Player, name, teamType string) {
 // The target can accept the invite by using the '/team accept' command or decline it by using the '/team decline' command.
 // I think this function should be removed because its only used one time in the codebase.
 func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
-	if t.HasMember(p.XUID()) {
+	if t.Member(p.XUID()) == team.Undefined {
 		return errors.New(message.ErrPlayerAlreadyMember.Build(p.Name()))
 	} else if s.LookupByMember(p.XUID()) != nil {
 		return errors.New(message.ErrPlayerAlreadyInTeam.Build(p.Name()))
