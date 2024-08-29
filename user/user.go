@@ -1,10 +1,10 @@
 package user
 
 import (
-	"errors"
-	"github.com/bitrule/hcteams/common"
-	"github.com/bitrule/hcteams/repository"
-	"sync"
+    "errors"
+    "github.com/bitrule/hcteams/common"
+    "github.com/bitrule/hcteams/repository"
+    "sync"
 )
 
 var (
@@ -70,7 +70,7 @@ func (u *User) Unmarshal(prop map[string]interface{}) error {
 
 // Marshal returns the user as a map
 func (u *User) Marshal() (map[string]interface{}, error) {
-    trackerData, err := u.tracker.Marshal()
+    trackMarshal, err := u.tracker.Marshal()
     if err != nil {
         return nil, errors.Join(errors.New("failed to marshal user tracker: "), err)
     }
@@ -78,7 +78,7 @@ func (u *User) Marshal() (map[string]interface{}, error) {
     return map[string]interface{}{
         "_id":     u.xuid,
         "name":    u.name,
-        "tracker": trackerData,
+        "tracker": trackMarshal,
     }, nil
 }
 

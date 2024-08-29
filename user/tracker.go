@@ -39,6 +39,15 @@ func (t *Tracker) IncAssists() {
 	t.assists++
 }
 
+// Marshal returns the tracker as a map
+func (t *Tracker) Marshal() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"kills":   t.kills,
+		"deaths":  t.deaths,
+		"assists": t.assists,
+	}, nil
+}
+
 // Unmarshal unmarshals the tracker from a map
 func (t *Tracker) Unmarshal(prop map[string]interface{}) error {
 	kills, ok := prop["kills"].(int)
