@@ -21,20 +21,19 @@ import (
 var IDKey = "_id"
 
 type TeamService struct {
-	conf startup.TeamsConfig
-	col  *mongo.Collection
+	col *mongo.Collection // Repository
 
-	teamsMu sync.RWMutex
-	teams   map[string]team.Team
+	teamsMu sync.RWMutex         // Protects teams
+	teams   map[string]team.Team // Team ID -> Team
 
-	teamIdsMu sync.RWMutex
-	teamIds   map[string]string
+	teamIdsMu sync.RWMutex      // Protects teamIds
+	teamIds   map[string]string // Team name as lower case -> Team ID
 
-	teamsPerChunkMu sync.RWMutex
-	teamsPerChunk   map[string]map[world.ChunkPos][]string
+	teamsPerChunkMu sync.RWMutex                           // Protects teamsPerChunk
+	teamsPerChunk   map[string]map[world.ChunkPos][]string // World name -> Chunk position -> Team ID
 
-	membersMu sync.RWMutex
-	members   map[string]string
+	membersMu sync.RWMutex      // Protects members
+	members   map[string]string // XUID -> Team ID
 }
 
 // LookupByMember looks up a team by a member's XUID.
