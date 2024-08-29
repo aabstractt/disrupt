@@ -9,6 +9,10 @@ import (
 
 type userJoinHandler struct{}
 
+func RegisterJoinHandler() {
+	// TODO: Register with aurial
+}
+
 func (userJoinHandler) HandleJoin(p *player.Player) {
 	if service.User().LookupByXUID(p.XUID()) == nil {
 		go func() {

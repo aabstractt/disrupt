@@ -8,6 +8,10 @@ import (
 
 type deathHandler struct{}
 
+func RegisterDeathHandler() {
+
+}
+
 func (deathHandler) HandleDeath(p *player.Player) {
     u := service.User().LookupByXUID(p.XUID())
     if u == nil {
