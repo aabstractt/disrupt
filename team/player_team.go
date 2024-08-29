@@ -115,32 +115,6 @@ func (t *PlayerTeam) HasInvite(xuid string) bool {
 	return false
 }
 
-// Disband disbands the team
-func (t *PlayerTeam) Disband() error {
-	if repo == nil {
-		return errors.New("missing repository")
-	}
-
-	if r, err := repo.Delete(t.tracker.Id()); err != nil || r.DeletedCount == 0 {
-		if err != nil {
-			return errors.Join(errors.New("failed to disband the team: "), err)
-		}
-
-		return errors.New("failed to disband the team")
-	}
-
-	// membersMu.Lock() helps to prevent deadlocks
-	membersMu.Lock()
-
-	for xuid := range t.Members() {
-		delete(membersId, xuid)
-	}
-
-	membersMu.Unlock()
-
-	return errors.New("not implemented")
-}
-
 // Unmarshal loads the monitor's configuration from a map
 func (t *PlayerTeam) Unmarshal(prop map[string]interface{}) error {
 	invites, ok := prop["invites"].([]string)
@@ -219,10 +193,6 @@ func Empty(ownership, name, teamType string) Team {
 }
 
 func Hook() {
-	if repo != nil {
-		common.Log.Panic("repository for teams already exists")
-	}
-
 	// TODO: Optimize this a many bit
 	repo = repository.NewMongoDB(
 		func(data map[string]interface{}) (Team, error) {

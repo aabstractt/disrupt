@@ -13,33 +13,21 @@ type TeamInviteCmd struct {
 
 func (m TeamInviteCmd) Run(src cmd.Source, output *cmd.Output) {
 	// s means to self
-	s, ok := src.(*player.Player)
-	if !ok {
+	if s, ok := src.(*player.Player); !ok {
 		output.Error("This command can only be run by a player.")
-
-		return
-	}
-
-	if len(m.Targets) == 0 {
+	} else if len(m.Targets) == 0 {
 		output.Error("No targets specified.")
-
-		return
-	}
-
-	t := service.Team().LookupByMember(s.XUID())
-	if t == nil {
+	} else if t := service.Team().LookupByMember(s.XUID()); t == nil {
 		output.Error(message.ErrSelfNotInTeam.Build())
-
-		return
-	}
-
-	// lt means lazy target
-	for _, lt := range m.Targets {
-		if p, ok := lt.(*player.Player); ok {
-			if err := service.Team().Invite(t, p); err != nil {
-				output.Error(err)
-			} else {
-				s.Message(message.SuccessTeamInviteSent.Build(p.Name()))
+	} else {
+		// lt means lazy target
+		for _, lt := range m.Targets {
+			if p, ok := lt.(*player.Player); ok {
+				if err := service.Team().Invite(t, p); err != nil {
+					output.Error(err)
+				} else {
+					s.Message(message.SuccessTeamInviteSent.Build(p.Name()))
+				}
 			}
 		}
 	}

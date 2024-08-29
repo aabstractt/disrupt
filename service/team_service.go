@@ -79,6 +79,15 @@ func (s *TeamService) Delete(id string) {
 	}
 }
 
+func (s *TeamService) DeleteMember(xuid string) {
+	s.membersMu.Lock()
+	defer s.membersMu.Unlock()
+
+	if _, ok := s.members[xuid]; ok {
+		delete(s.members, xuid)
+	}
+}
+
 // CacheMember caches a member's team ID.
 func (s *TeamService) CacheMember(xuid, teamId string) {
 	s.membersMu.Lock()
@@ -151,6 +160,31 @@ func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
 
 	p.Message(message.SuccessTeamInviteReceived.Build(p.Name(), t.Tracker().Name()))
 	t.Broadcast(message.SuccessBroadcastTeamInviteSent.Build(p.Name(), t.Tracker().Name()))
+
+	return nil
+}
+
+func (s *TeamService) Disband(t *team.PlayerTeam) error {
+	if s.repository == nil {
+		return errors.New("missing repository")
+	}
+
+	u := userService.LookupByXUID(t.Ownership())
+	if u == nil {
+		return errors.New("leader not found")
+	}
+
+	if r, err := s.repository.Delete(t.Tracker().Id()); err != nil {
+		return err
+	} else if r.DeletedCount == 0 {
+		return errors.New("team not found into our database")
+	}
+
+	t.Broadcast(message.SuccessBroadcastTeamDisbanded.Build(u.Name(), t.Tracker().Name()))
+
+	for xuid := range t.Members() {
+		s.DeleteMember(xuid)
+	}
 
 	return nil
 }
