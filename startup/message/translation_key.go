@@ -6,9 +6,13 @@ var (
 	ErrTeamAlreadyExists    = translationKey{"team.already_exists", "team"}           // This means a team with the same name already exists
 	ErrPlayerAlreadyInTeam  = translationKey{"team.player_already_in_team", "player"} // This means the target player is already in a team
 	ErrSelfAlreadyInTeam    = translationKey{"team.self_already_in_team"}             // This means the sender is already in a team
+	ErrPlayerNotInTeam      = translationKey{"team.player_not_in_team", "player"}     // This means the target player is not in a team
 	ErrPlayerAlreadyMember  = translationKey{"team.player_already_member", "player"}  // This means the target player is already a member of the team
 	ErrPlayerAlreadyInvited = translationKey{"team.player_already_invited", "player"} // This means the target player is already invited to the team
 	ErrSelfNotInTeam        = translationKey{"team.self_not_in_team"}                 // This means the sender is not in a team
+	ErrSelfNotLeader        = translationKey{"team.self_not_leader"}                  // This means the sender is not the leader of the team
+	ErrSelfNotOfficer       = translationKey{"team.self_not_officer"}                 // This means the sender is not an officer of the team
+	ErrSelfNotInvited       = translationKey{"team.self_not_invited", "team"}         // This means the sender is not invited to the team
 
 	SuccessTeamCreated     = translationKey{"team.success_broadcast_team_created", "player", "team"} // This means a team was successfully created
 	SuccessSelfTeamCreated = translationKey{"team.success_self_team_created", "team"}                // This means the sender successfully created a team
@@ -16,6 +20,9 @@ var (
 	SuccessTeamInviteSent          = translationKey{"team.success_team_invite_sent", "player"}                     // This means the sender successfully sent an invite to the target player
 	SuccessBroadcastTeamInviteSent = translationKey{"team.success_broadcast_team_invite_sent", "sender", "player"} // This means the sender successfully sent an invite to the target player
 	SuccessTeamInviteReceived      = translationKey{"team.success_team_invite_received", "sender", "team"}         // This means the target player successfully received an invite
+
+	SuccessSelfTeamDisband = translationKey{"team.success_self_team_disband", "team"}      // This means the sender successfully disbanded their team
+	SuccessTeamDisband     = translationKey{"team.success_team_disband", "leader", "team"} // This means a team was successfully disbanded
 )
 
 type translationKey []string

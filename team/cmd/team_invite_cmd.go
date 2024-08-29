@@ -21,7 +21,7 @@ func (m TeamInviteCmd) Run(src cmd.Source, output *cmd.Output) {
 	} else if t := service.Team().LookupByMember(s.XUID()); t == nil {
 		output.Error(message.ErrSelfNotInTeam.Build())
 	} else if t.Role(s.XUID()).LowestThan(team.Officer) { // Check if the player is an officer or higher, if not, return an error
-		output.Error(message.ErrRoleLowestThanLeader.Build())
+		output.Error(message.ErrSelfNotOfficer.Build())
 	} else {
 		// lt means lazy target
 		for _, lt := range m.Targets {

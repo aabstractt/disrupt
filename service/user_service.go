@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/user"
+	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -114,6 +115,16 @@ func (s *UserService) Create(p *player.Player) error {
 	}
 
 	s.cache(u)
+
+	return nil
+}
+
+func (s *UserService) FindFirst(targets []cmd.Target) *player.Player {
+	for _, lt := range targets {
+		if p, ok := lt.(*player.Player); ok {
+			return p
+		}
+	}
 
 	return nil
 }

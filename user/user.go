@@ -2,8 +2,6 @@ package user
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams/repository"
-	"github.com/bitrule/hcteams/startup"
 )
 
 // New creates an empty user
@@ -82,38 +80,4 @@ func (u *User) Marshal() (map[string]interface{}, error) {
 		"name":    u.name,
 		"tracker": trackMarshal,
 	}, nil
-}
-
-// Hook hooks the repository
-func Hook() {
-	if repo != nil {
-		startup.Log.Panic("repository for users already exists")
-	}
-
-	repo = repository.NewMongoDB(
-		func(data map[string]interface{}) (User, error) {
-			u := User{}
-			if err := u.Unmarshal(data); err != nil {
-				return u, err
-			}
-
-			return u, nil
-		},
-		func(u User) (map[string]interface{}, error) {
-			return u.Marshal()
-		},
-		"users",
-	)
-
-	values, err := repo.FindAll()
-	if err != nil {
-		startup.Log.Panic("failed to find all users: ", err)
-	}
-
-	for _, u := range values {
-		// Make u as a pointer and store it
-		Store(&u)
-	}
-
-	startup.Log.Infof("Successfully loaded %d user(s)", len(values))
 }
