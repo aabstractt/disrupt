@@ -4,18 +4,20 @@ import (
 	"errors"
 	"github.com/bitrule/hcteams/repository"
 	"github.com/bitrule/hcteams/startup"
-	"sync"
 )
 
-var (
-	usersIdMu sync.RWMutex
-	usersMu   sync.RWMutex
-
-	usersId = make(map[string]string)
-	users   = make(map[string]*User)
-
-	repo repository.Repository[User]
-)
+// New creates an empty user
+func New(xuid, name string) *User {
+	return &User{
+		xuid: xuid,
+		name: name,
+		tracker: &Tracker{
+			kills:   0,
+			deaths:  0,
+			assists: 0,
+		},
+	}
+}
 
 type User struct {
 	xuid string

@@ -8,6 +8,7 @@ import (
 	"github.com/df-mc/dragonfly/server/player"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"sync"
 )
 
@@ -78,7 +79,7 @@ func (s *UserService) Save(xuid string) error {
 		return errors.New("missing repository")
 	}
 
-	r, err := s.col.UpdateOne(context.Background(), bson.M{"_id": u.XUID()}, bson.M{"$set": u})
+	r, err := s.col.UpdateOne(context.Background(), bson.M{IDKey: u.XUID()}, bson.M{"$set": u})
 	if err != nil {
 		return errors.Join(errors.New("failed to save the user: "), err)
 	}
@@ -96,9 +97,14 @@ func (s *UserService) Create(p *player.Player) error {
 		return errors.New("missing mongo collection")
 	}
 
-	u := user.Empty(p.XUID(), p.Name())
+	u := user.New(p.XUID(), p.Name())
 
-	r, err := s.col.UpdateOne(u)
+	r, err := s.col.UpdateOne(
+		context.TODO(),
+		bson.M{IDKey: u.XUID()},
+		bson.M{"$set": u.Marshal()},
+		options.Update().SetUpsert(true),
+	)
 	if err != nil {
 		return errors.Join(errors.New("failed to create the user: "), err)
 	}
@@ -118,7 +124,11 @@ func (s *UserService) Hook(dbname string) error {
 		return errors.New("repository already hooked")
 	}
 
-	s.col = startup.MongoDB().Database(dbname).Collection("users")
+	if startup.Mongo == nil {
+		return errors.New("missing mongo client")
+	}
+
+	s.col = startup.Mongo.Database(dbname).Collection("users")
 
 	cur, err := s.col.Find(context.Background(), nil)
 	if err != nil {
@@ -137,6 +147,10 @@ func (s *UserService) Hook(dbname string) error {
 		}
 
 		s.cache(u)
+	}
+
+	if err := cur.Close(context.TODO()); err != nil {
+		return errors.Join(errors.New("failed to close the cursor: "), err)
 	}
 
 	startup.Log.Infof("Successfully loaded %d user(s)", len(s.users))

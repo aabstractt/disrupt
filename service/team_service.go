@@ -1,19 +1,23 @@
 package service
 
 import (
+	"context"
 	"errors"
-	"github.com/bitrule/hcteams/repository"
 	"github.com/bitrule/hcteams/startup/message"
 	"github.com/bitrule/hcteams/team"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"
 	"github.com/sandertv/gophertunnel/minecraft/text"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
 	"sync"
 )
 
+var IDKey = "_id"
+
 type TeamService struct {
-	repository repository.Repository[team.Team]
+	col *mongo.Collection
 
 	teamsMu sync.RWMutex
 	teams   map[string]team.Team
@@ -111,10 +115,8 @@ func (s *TeamService) cache(t team.Team) {
 func (s *TeamService) Create(p *player.Player, name, teamType string) {
 	if t := team.Empty(p.XUID(), name, teamType); t == nil {
 		p.Message(text.Red + "Failed to create the team: Team is nil")
-	} else if r, err := s.repository.Insert(t); err != nil {
+	} else if err := s.Save(t); err != nil {
 		p.Message(text.Red + "Failed to create the team: " + err.Error())
-	} else if r.ModifiedCount > 0 {
-		p.Message(text.DarkRed + "An error occurred while creating the team: " + text.Red + "Team already exists.")
 	} else {
 		// Store the team in the service.
 		s.cache(t)
@@ -160,20 +162,37 @@ func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
 // also, it will delete all the members from the team and the service.
 // Use this function into a goroutine to prevent blocking the main thread.
 func (s *TeamService) Disband(t *team.PlayerTeam) error {
-	if s.repository == nil {
+	if s.col == nil {
 		return errors.New("missing repository")
 	} else if u := userService.LookupByXUID(t.Ownership()); u == nil {
 		return errors.New("leader not found")
-	} else if r, err := s.repository.Delete(t.Tracker().Id()); err != nil {
+	} else if r, err := s.col.DeleteOne(context.TODO(), bson.M{IDKey: t.Tracker().Id()}); err != nil {
 		return err
 	} else if r.DeletedCount == 0 {
 		return errors.New("team not found into our database")
 	} else {
-		t.Broadcast(message.SuccessBroadcastTeamDisbanded.Build(u.Name(), t.Tracker().Name()))
+		t.Broadcast(message.SuccessTeamDisband.Build(u.Name(), t.Tracker().Name()))
 
 		for xuid := range t.Members() {
 			s.DeleteMember(xuid)
 		}
+	}
+
+	return nil
+}
+
+func (s *TeamService) Save(t team.Team) error {
+	if s.col == nil {
+		return errors.New("missing repository")
+	}
+
+	r, err := s.col.UpdateOne(context.TODO(), bson.M{IDKey: t.Tracker().Id()}, bson.M{"$set": t.Marshal()})
+	if err != nil {
+		return errors.New("failed to save the team: " + err.Error())
+	}
+
+	if r.MatchedCount == 0 && r.UpsertedCount == 0 {
+		return errors.New("failed to save the team: no documents matched the filter")
 	}
 
 	return nil
