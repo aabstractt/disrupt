@@ -8,9 +8,12 @@ import (
 	"github.com/bitrule/hcteams/team"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"
+	"github.com/df-mc/dragonfly/server/world"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"math"
 	"strings"
 	"sync"
 )
@@ -26,6 +29,9 @@ type TeamService struct {
 
 	teamIdsMu sync.RWMutex
 	teamIds   map[string]string
+
+	teamsPerChunkMu sync.RWMutex
+	teamsPerChunk   map[string]map[world.ChunkPos][]string
 
 	membersMu sync.RWMutex
 	members   map[string]string
@@ -66,6 +72,56 @@ func (s *TeamService) LookupById(id string) team.Team {
 
 	if t, ok := s.teams[id]; ok {
 		return t
+	}
+
+	return nil
+}
+
+// LookupByChunk looks up teams by a world and a Vec3.
+func (s *TeamService) LookupByChunk(w *world.World, vec3 mgl64.Vec3) []team.Team {
+	s.teamsPerChunkMu.RLock()
+	defer s.teamsPerChunkMu.RUnlock()
+
+	chunks := s.teamsPerChunk[w.Name()]
+	if chunks == nil {
+		return nil
+	}
+
+	teamIds := chunks[world.ChunkPos{int32(math.Floor(vec3[0])) >> 4, int32(math.Floor(vec3[2])) >> 4}]
+	if teamIds == nil {
+		return nil
+	}
+
+	teams := make([]team.Team, 0, len(teamIds))
+	for _, id := range teamIds {
+		if t := s.LookupById(id); t != nil {
+			teams = append(teams, t)
+		}
+	}
+
+	return teams
+}
+
+// LookupAt looks up a team by a Vec3.
+// First it looks up the teams in the chunk the Vec3 is in, then it checks if the Vec3 is within any of the
+// teams' bounding boxes. Also, see LookupByChunk.
+func (s *TeamService) LookupAt(w *world.World, vec3 mgl64.Vec3) team.Team {
+	teamsPerChunk := s.LookupByChunk(w, vec3)
+	if teamsPerChunk == nil || len(teamsPerChunk) == 0 {
+		return nil
+	}
+
+	for _, t := range teamsPerChunk {
+		bboxes := t.Tracker().Cuboids()[w.Name()]
+		if bboxes == nil {
+			continue
+		}
+
+		for _, bbox := range bboxes {
+			if bbox.Vec3Within(vec3) {
+				return t
+			}
+		}
 	}
 
 	return nil
@@ -269,7 +325,8 @@ func Team() *TeamService {
 }
 
 var teamService = &TeamService{
-	teams:   make(map[string]team.Team),
-	teamIds: make(map[string]string),
-	members: make(map[string]string),
+	teams:         make(map[string]team.Team),
+	teamIds:       make(map[string]string),
+	members:       make(map[string]string),
+	teamsPerChunk: make(map[string]map[world.ChunkPos][]string),
 }
