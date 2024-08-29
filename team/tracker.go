@@ -8,6 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	BlockBreakableKeyOption = "block_breakable"
+	BlockPlaceableKeyOption = "block_placeable"
+	FriendlyFireKeyOption   = "friendly_fire"
+	DisplayNameKeyOption    = "display_name"
+	SafeZoneKeyOption       = "safe_zone"
+)
+
 type Tracker struct {
 	id       string // Team ID
 	name     string // Team name
@@ -16,37 +24,44 @@ type Tracker struct {
 	balance atomic.Int32
 	points  atomic.Int32
 
+	options map[string]interface{}
+
 	cuboids map[string][]cube.BBox
 }
 
 // Id returns the team's ID
-func (m *Tracker) Id() string {
-	return m.id
+func (t *Tracker) Id() string {
+	return t.id
 }
 
 // Name returns the team's name
-func (m *Tracker) Name() string {
-	return m.name
+func (t *Tracker) Name() string {
+	return t.name
 }
 
 // TeamType returns the team's type
-func (m *Tracker) TeamType() string {
-	return m.teamType
+func (t *Tracker) TeamType() string {
+	return t.teamType
 }
 
 // Balance returns the team's balance
-func (m *Tracker) Balance() atomic.Int32 {
-	return m.balance
+func (t *Tracker) Balance() atomic.Int32 {
+	return t.balance
 }
 
 // Points returns the team's points
-func (m *Tracker) Points() atomic.Int32 {
-	return m.points
+func (t *Tracker) Points() atomic.Int32 {
+	return t.points
+}
+
+// Option returns the team's option
+func (t *Tracker) Option(key string) interface{} {
+	return t.options[key]
 }
 
 // Cuboids returns the team's cuboids
-func (m *Tracker) Cuboids() map[string][]cube.BBox {
-	return m.cuboids
+func (t *Tracker) Cuboids() map[string][]cube.BBox {
+	return t.cuboids
 }
 
 // Marshal handles the serialization of the tracker struct

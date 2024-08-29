@@ -114,16 +114,14 @@ func (s *TeamService) cache(t team.Team) {
 
 // Create creates a team.
 // Use this function into a goroutine to prevent blocking the main thread.
-func (s *TeamService) Create(p *player.Player, name, teamType string) {
-	if t := team.Empty(p.XUID(), name, teamType); t == nil {
-		p.Message(text.Red + "Failed to create the team: Team is nil")
-	} else if err := s.Save(t); err != nil {
+func (s *TeamService) Create(p *player.Player, t team.Team) {
+	if err := s.Save(t); err != nil {
 		p.Message(text.Red + "Failed to create the team: " + err.Error())
 	} else {
 		// Store the team in the service.
 		s.cache(t)
 
-		p.Message(message.SuccessSelfTeamCreated.Build(name))
+		p.Message(message.SuccessSelfTeamCreated.Build(t.Tracker().Name()))
 
 		_, ok := t.(*team.PlayerTeam)
 		if !ok {
@@ -132,10 +130,33 @@ func (s *TeamService) Create(p *player.Player, name, teamType string) {
 
 		s.CacheMember(p.XUID(), t.Tracker().Id())
 
-		if _, err = chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), name)); err != nil {
+		if _, err = chat.Global.WriteString(message.SuccessTeamCreated.Build(p.Name(), t.Tracker().Name())); err != nil {
 			p.Message(team.Prefix + text.Red + "Failed to broadcast team creation: " + err.Error())
 		}
 	}
+}
+
+// DisplayName returns the display name of a team.
+// This function will return the display name of a team based on the player's role in the team.
+func (s *TeamService) DisplayName(p *player.Player, t team.Team) string {
+	if v, ok := t.Tracker().Option(team.DisplayNameKeyOption).(string); ok {
+		return v
+	}
+
+	if pt, ok := t.(*team.PlayerTeam); ok {
+		// If the player is member, his role never will be undefined.
+		if pt.Member(p.XUID()) != team.Undefined {
+			return startup.Config.Teams.DisplayColourSameTeam + t.Tracker().Name()
+		}
+
+		if pt.HasInvite(p.XUID()) {
+			return startup.Config.Teams.DisplayColourInvited + t.Tracker().Name()
+		}
+
+		return startup.Config.Teams.DisplayColourOpponent + t.Tracker().Name()
+	}
+
+	return text.Red
 }
 
 // Invite invites a player to a team.
@@ -213,8 +234,33 @@ func (s *TeamService) DoTick() {
 	}
 }
 
-func (s *TeamService) Config() startup.TeamsConfig {
-	return s.conf
+func (s *TeamService) Hook() error {
+	if s.col != nil {
+		return errors.New("repository already set")
+	}
+
+	s.col = startup.Mongo.Database(startup.Config.MongoDB.DBName).Collection("teams")
+
+	cur, err := s.col.Find(context.TODO(), bson.M{})
+	if err != nil {
+		return errors.New("failed to hook the repository: " + err.Error())
+	}
+
+	for cur.Next(context.Background()) {
+		var body map[string]interface{}
+		if err = cur.Decode(&body); err != nil {
+			return errors.Join(errors.New("failed to decode the body of team: "), err)
+		}
+
+		t, err := team.Unmarshal(body)
+		if err != nil {
+			return errors.Join(errors.New("failed to unmarshal the team: "), err)
+		}
+
+		s.cache(t)
+	}
+
+	return nil
 }
 
 // Team returns the team service.

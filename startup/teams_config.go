@@ -5,4 +5,10 @@ type TeamsConfig struct {
 		URI    string
 		DBName string
 	}
+
+	Teams struct {
+		DisplayColourSameTeam string
+		DisplayColourInvited  string
+		DisplayColourOpponent string
+	}
 }

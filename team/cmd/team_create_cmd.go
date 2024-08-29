@@ -31,6 +31,6 @@ func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 	} else if len(m.Name) < 3 {
 		output.Error(text.Red + "Name cannot be shorter than 3 characters.")
 	} else {
-		go service.Team().Create(p, m.Name, team.PlayerTeamType)
+		go service.Team().Create(p, team.NewPlayerTeam(p.XUID(), m.Name))
 	}
 }

@@ -16,7 +16,7 @@ func RegisterJoinHandler() {
 func (userJoinHandler) HandleJoin(p *player.Player) {
 	if service.User().LookupByXUID(p.XUID()) == nil {
 		go func() {
-			if err := service.User().Create(p); err != nil {
+			if err := service.User().Create(p.XUID(), p.Name()); err != nil {
 				p.Disconnect(text.Red + "An error occurred while creating your user.\n" + text.Yellow + "Please try again later.")
 
 				startup.Log.Error(err)

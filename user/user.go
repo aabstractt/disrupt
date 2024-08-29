@@ -21,6 +21,8 @@ type User struct {
 	xuid string
 	name string
 
+	teamAt string
+
 	tracker *Tracker
 }
 
@@ -32,6 +34,16 @@ func (u *User) XUID() string {
 // Name returns the user's name
 func (u *User) Name() string {
 	return u.name
+}
+
+// TeamAt returns the team the user is at
+func (u *User) TeamAt() string {
+	return u.teamAt
+}
+
+// SetTeamAt sets the team the user is at
+func (u *User) SetTeamAt(team string) {
+	u.teamAt = team
 }
 
 // Tracker returns the user's tracker

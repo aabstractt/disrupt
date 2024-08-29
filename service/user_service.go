@@ -9,7 +9,6 @@ import (
 	"github.com/df-mc/dragonfly/server/player"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"sync"
 )
 
@@ -69,18 +68,53 @@ func (s *UserService) Unload(p *player.Player) {
 	s.xuidsMu.Unlock()
 }
 
-// Save saves a user to the repository.
-func (s *UserService) Save(xuid string) error {
-	u := s.LookupByXUID(xuid)
-	if u == nil {
-		return errors.New("user not found")
+// Hook hooks the repository to the service.
+func (s *UserService) Hook() error {
+	if s.col != nil {
+		return errors.New("repository already hooked")
 	}
 
+	if startup.Mongo == nil {
+		return errors.New("missing mongo client")
+	}
+
+	s.col = startup.Mongo.Database(startup.Config.MongoDB.DBName).Collection("users")
+
+	cur, err := s.col.Find(context.Background(), nil)
+	if err != nil {
+		return errors.Join(errors.New("failed to hook the repository: "), err)
+	}
+
+	for cur.Next(context.Background()) {
+		var body map[string]interface{}
+		if err := cur.Decode(&body); err != nil {
+			return errors.Join(errors.New("failed to decode the user: "), err)
+		}
+
+		u := &user.User{}
+		if err := u.Unmarshal(body); err != nil {
+			return errors.Join(errors.New("failed to unmarshal the user: "), err)
+		}
+
+		s.cache(u)
+	}
+
+	if err := cur.Close(context.TODO()); err != nil {
+		return errors.Join(errors.New("failed to close the cursor: "), err)
+	}
+
+	startup.Log.Infof("Successfully loaded %d user(s)", len(s.users))
+
+	return nil
+}
+
+// Save saves a user to the repository.
+func (s *UserService) Save(u *user.User) error {
 	if s.col == nil {
 		return errors.New("missing repository")
 	}
 
-	r, err := s.col.UpdateOne(context.Background(), bson.M{IDKey: u.XUID()}, bson.M{"$set": u})
+	r, err := s.col.UpdateOne(context.Background(), bson.M{IDKey: u.XUID()}, bson.M{"$set": u.Marshal()})
 	if err != nil {
 		return errors.Join(errors.New("failed to save the user: "), err)
 	}
@@ -93,25 +127,10 @@ func (s *UserService) Save(xuid string) error {
 }
 
 // Create creates a user.
-func (s *UserService) Create(p *player.Player) error {
-	if s.col == nil {
-		return errors.New("missing mongo collection")
-	}
-
-	u := user.New(p.XUID(), p.Name())
-
-	r, err := s.col.UpdateOne(
-		context.TODO(),
-		bson.M{IDKey: u.XUID()},
-		bson.M{"$set": u.Marshal()},
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
-		return errors.Join(errors.New("failed to create the user: "), err)
-	}
-
-	if r.MatchedCount == 0 && r.UpsertedCount == 0 {
-		return errors.New("failed to create the user: no documents matched the filter")
+func (s *UserService) Create(xuid, name string) error {
+	u := user.New(xuid, name)
+	if err := s.Save(u); err != nil {
+		return err
 	}
 
 	s.cache(u)
@@ -132,55 +151,6 @@ func (s *UserService) First(targets []cmd.Target) *player.Player {
 	}
 
 	return nil
-}
-
-// Hook hooks the repository to the service.
-func (s *UserService) Hook() error {
-	if s.col != nil {
-		return errors.New("repository already hooked")
-	}
-
-	if startup.Mongo == nil {
-		return errors.New("missing mongo client")
-	}
-
-	s.col = startup.Mongo.Database(startup.Config.MongoDB.DBName).Collection("users")
-
-	cur, err := s.col.Find(context.Background(), nil)
-	if err != nil {
-		return errors.Join(errors.New("failed to hook the repository: "), err)
-	}
-
-	for cur.Next(context.Background()) {
-		var prop map[string]interface{}
-		if err := cur.Decode(&prop); err != nil {
-			return errors.Join(errors.New("failed to decode the user: "), err)
-		}
-
-		u, err := s.decode(prop)
-		if err != nil {
-			return errors.Join(errors.New("failed to decode the user: "), err)
-		}
-
-		s.cache(u)
-	}
-
-	if err := cur.Close(context.TODO()); err != nil {
-		return errors.Join(errors.New("failed to close the cursor: "), err)
-	}
-
-	startup.Log.Infof("Successfully loaded %d user(s)", len(s.users))
-
-	return nil
-}
-
-func (s *UserService) decode(prop map[string]interface{}) (*user.User, error) {
-	u := &user.User{}
-	if err := u.Unmarshal(prop); err != nil {
-		return nil, errors.Join(errors.New("failed to decode the user: "), err)
-	}
-
-	return u, nil
 }
 
 var userService = &UserService{

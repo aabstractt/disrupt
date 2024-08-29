@@ -1,6 +1,7 @@
 package team
 
 import (
+	"errors"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 )
 
@@ -23,6 +24,39 @@ type Team interface {
 	Unmarshal(prop map[string]interface{}) error
 	// Marshal returns the team's tracker as a map
 	Marshal() (map[string]interface{}, error)
+}
+
+func Unmarshal(body map[string]interface{}) (Team, error) {
+	trackerBody, ok := body["tracker"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("missing team tracker")
+	}
+
+	tracker := &Tracker{}
+	if err := tracker.Unmarshal(trackerBody); err != nil {
+		return nil, errors.Join(errors.New("failed to unmarshal team tracker: "), err)
+	}
+
+	var t Team
+	if tracker.TeamType() == PlayerTeamType {
+		t = &PlayerTeam{
+			tracker: tracker,
+		}
+	} else if tracker.TeamType() == SystemTeamType {
+		t = &SystemTeam{
+			tracker: tracker,
+		}
+	}
+
+	if t == nil {
+		return nil, errors.New("invalid team type")
+	}
+
+	if err := t.Unmarshal(body); err != nil {
+		return nil, errors.Join(errors.New("failed to unmarshal team: "), err)
+	}
+
+	return t, nil
 }
 
 type Role int // Role is a type that represents the role of a team member.

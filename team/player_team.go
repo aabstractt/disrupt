@@ -3,13 +3,11 @@ package team
 import (
 	"errors"
 	"github.com/bitrule/hcteams/startup"
-	"github.com/bitrule/hcteams/team/member"
 	"github.com/google/uuid"
 	"slices"
 	"sync"
 	"sync/atomic"
 
-	"github.com/bitrule/hcteams/repository"
 	"github.com/bitrule/hcteams/team/tickable"
 )
 
@@ -95,7 +93,7 @@ func (t *PlayerTeam) AddInvite(xuid string) {
 	t.invitesMu.Unlock()
 }
 
-// RemoveInvite removes an invite from the team
+// RemoveInvite removes an invitation from the team
 func (t *PlayerTeam) RemoveInvite(xuid string) {
 	t.invitesMu.Lock()
 	defer t.invitesMu.Unlock()
@@ -167,71 +165,19 @@ func (t *PlayerTeam) Marshal() (map[string]interface{}, error) {
 	return prop, nil
 }
 
-func Empty(ownership, name, teamType string) Team {
-	tracker := &Tracker{
-		id:       uuid.New().String(),
-		name:     name,
-		teamType: teamType,
+func NewPlayerTeam(ownership, name string) *PlayerTeam {
+	return &PlayerTeam{
+		tracker: &Tracker{
+			id:       uuid.New().String(),
+			name:     name,
+			teamType: PlayerTeamType,
 
-		balance: atomic.Int32{},
-		points:  atomic.Int32{},
-	}
-
-	if teamType == PlayerTeamType {
-		return &PlayerTeam{
-			tracker:   tracker,
-			ownership: ownership,
-			members: map[string]string{
-				ownership: member.Leader.Name(),
-			},
-		}
-	} else if teamType == SystemTeamType {
-		return &SystemTeam{
-			tracker: tracker,
-		}
-	}
-
-	return nil
-}
-
-func Hook() {
-	// TODO: Optimize this a many bit
-	repo = repository.NewMongoDB(
-		func(data map[string]interface{}) (Team, error) {
-			trackProp, ok := data["tracker"].(map[string]interface{})
-			if !ok {
-				return nil, errors.New("missing team tracker")
-			}
-
-			tracker := &Tracker{}
-			if err := tracker.Unmarshal(trackProp); err != nil {
-				return nil, errors.Join(errors.New("failed to unmarshal team tracker: "), err)
-			}
-
-			var t Team
-			if tracker.TeamType() == PlayerTeamType {
-				t = &PlayerTeam{
-					tracker: tracker,
-				}
-			} else if tracker.TeamType() == SystemTeamType {
-				t = &SystemTeam{
-					tracker: tracker,
-				}
-			}
-
-			if t == nil {
-				return nil, errors.New("invalid team type")
-			}
-
-			if err := t.Unmarshal(data); err != nil {
-				return nil, errors.Join(errors.New("failed to unmarshal player team: "), err)
-			}
-
-			return t, nil
+			balance: atomic.Int32{},
+			points:  atomic.Int32{},
 		},
-		func(t Team) (map[string]interface{}, error) {
-			return t.Marshal()
+		ownership: ownership,
+		members: map[string]Role{
+			ownership: Leader,
 		},
-		"teams",
-	)
+	}
 }
