@@ -5,6 +5,7 @@ import (
 	tcmd "github.com/bitrule/hcteams/team/cmd"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 func main() {
@@ -29,4 +30,12 @@ func main() {
 		tcmd.TeamLeaveCmd{},
 		tcmd.TeamAcceptCmd{},
 	))
+
+	ticker := time.NewTicker(50 * time.Millisecond)
+	go func() {
+		for range ticker.C {
+			service.Team().DoTick()
+			service.User().DoTick()
+		}
+	}()
 }

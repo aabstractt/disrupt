@@ -1,13 +1,22 @@
 package team
 
-import "errors"
+import (
+	"errors"
+	"github.com/bitrule/hcteams/team/tickable"
+)
 
 type SystemTeam struct {
 	tracker *Tracker
+
+	tick tickable.Tick
 }
 
 func (t *SystemTeam) Tracker() *Tracker {
 	return t.tracker
+}
+
+func (t *SystemTeam) DoTick() {
+	t.tick.DoTick()
 }
 
 func (t *SystemTeam) Marshal() (map[string]interface{}, error) {

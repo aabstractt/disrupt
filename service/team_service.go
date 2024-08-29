@@ -200,6 +200,19 @@ func (s *TeamService) Save(t team.Team) error {
 	return nil
 }
 
+// DoTick ticks all the system teams.
+// This function should be called every tick.
+func (s *TeamService) DoTick() {
+	s.teamsMu.RLock()
+	defer s.teamsMu.RUnlock()
+
+	for _, t := range s.teams {
+		if st, ok := t.(*team.SystemTeam); ok {
+			st.DoTick()
+		}
+	}
+}
+
 func (s *TeamService) Config() startup.TeamsConfig {
 	return s.conf
 }

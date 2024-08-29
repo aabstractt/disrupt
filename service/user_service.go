@@ -140,15 +140,11 @@ func (s *UserService) Hook() error {
 		return errors.New("repository already hooked")
 	}
 
-	if teamService == nil {
-		return errors.New("user service cannot be hooked first than team service")
-	}
-
 	if startup.Mongo == nil {
 		return errors.New("missing mongo client")
 	}
 
-	s.col = startup.Mongo.Database(teamService.conf.MongoDB.DBName).Collection("users")
+	s.col = startup.Mongo.Database(startup.Config.MongoDB.DBName).Collection("users")
 
 	cur, err := s.col.Find(context.Background(), nil)
 	if err != nil {
