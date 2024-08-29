@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/bitrule/hcteams/common/message"
+	"github.com/bitrule/hcteams/service"
 	"github.com/df-mc/dragonfly/server/player/chat"
 	"strings"
 
@@ -21,9 +22,9 @@ func (m TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 		output.Error(text.Red + "This command can only be run by a player.")
 	} else if strings.TrimSpace(m.Name) == "" {
 		output.Error(team.Prefix + "Name cannot be empty.")
-	} else if team.LookupByName(m.Name) != nil {
+	} else if service.Team().LookupByName(m.Name) != nil {
 		output.Error(message.ErrTeamAlreadyExists.Build(m.Name))
-	} else if team.LookupByPlayer(p.XUID()) != nil {
+	} else if service.Team().LookupByMember(p.XUID()) != nil {
 		output.Error(message.ErrSelfAlreadyInTeam.Build())
 	} else if len(m.Name) > 16 {
 		output.Error(text.Red + "Name cannot be longer than 16 characters.")
