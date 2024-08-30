@@ -9,33 +9,33 @@ import (
 )
 
 func main() {
-	log := logrus.New()
+    log := logrus.New()
 
-	if err := service.World().Hook(); err != nil {
-		log.WithError(err).Panic("failed to hook world service")
-	}
+    if err := service.World().Hook(); err != nil {
+        log.WithError(err).Panic("failed to hook world service")
+    }
 
-	if err := service.User().Hook(); err != nil {
-		log.WithError(err).Panic("failed to hook user service")
-	}
+    if err := service.User().Hook(); err != nil {
+        log.WithError(err).Panic("failed to hook user service")
+    }
 
-	cmd.Register(cmd.New(
-		"team",
-		"Manage your team. Use '/team help' for more information.",
-		[]string{"t", "f", "faction"},
-		tcmd.TeamSystemCreateCmd{},
-		tcmd.TeamCreateCmd{},
-		tcmd.TeamInviteCmd{},
-		tcmd.TeamDisbandCmd{},
-		tcmd.TeamLeaveCmd{},
-		tcmd.TeamAcceptCmd{},
-	))
+    cmd.Register(cmd.New(
+        "team",
+        "Manage your team. Use '/team help' for more information.",
+        []string{"t", "f", "faction"},
+        tcmd.TeamSystemCreateCmd{},
+        tcmd.TeamCreateCmd{},
+        tcmd.TeamInviteCmd{},
+        tcmd.TeamDisbandCmd{},
+        tcmd.TeamLeaveCmd{},
+        tcmd.TeamAcceptCmd{},
+    ))
 
-	ticker := time.NewTicker(50 * time.Millisecond)
-	go func() {
-		for range ticker.C {
-			service.Team().DoTick()
-			service.User().DoTick()
-		}
-	}()
+    ticker := time.NewTicker(50 * time.Millisecond)
+    go func() {
+        for range ticker.C {
+            service.Team().DoTick()
+            service.User().DoTick()
+        }
+    }()
 }

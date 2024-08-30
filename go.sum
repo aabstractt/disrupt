@@ -1,3 +1,5 @@
+github.com/aabstractt/aurial v0.0.0-20240724075332-ef3f0dcb1f1c h1:RRwypv5QVTTAgkLRP2rD2TaeR4FU+irk3mzA0LydFbo=
+github.com/aabstractt/aurial v0.0.0-20240724075332-ef3f0dcb1f1c/go.mod h1:pHajmgPyL4gorxoZr5wyWNFGji51EkF2DBq+NbIecro=
 github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9 h1:/G0ghZwrhou0Wq21qc1vXXMm/t/aKWkALWwITptKbE0=
 github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9/go.mod h1:TOk10ahXejq9wkEaym3KPRNeuR/h5Jx+s8QRWIa2oTM=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=

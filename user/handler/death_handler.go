@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/aabstractt/aurial/handler"
 	"github.com/bitrule/disrupt"
 	"github.com/bitrule/disrupt/service"
 	"github.com/df-mc/dragonfly/server/player"
@@ -9,7 +10,7 @@ import (
 type deathHandler struct{}
 
 func RegisterDeathHandler() {
-
+	handler.RegisterHandler(handler.DeathHandlerID, deathHandler{})
 }
 
 func (deathHandler) HandleDeath(p *player.Player) {

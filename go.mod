@@ -12,6 +12,7 @@ require (
 )
 
 require (
+	github.com/aabstractt/aurial v0.0.0-20240724075332-ef3f0dcb1f1c // indirect
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/df-mc/atomic v1.10.0 // indirect
