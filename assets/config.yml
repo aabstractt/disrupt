@@ -1,0 +1,12 @@
+mongodb:
+  uri: ""
+  dbname: ""
+
+teams:
+  name:
+    min-length: 3
+    max-length: 20
+  display:
+    friendly-colour: "&2"
+    invited-colour: "&e"
+    enemy-colour: "&c"

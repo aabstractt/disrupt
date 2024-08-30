@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/bitrule/hcteams/config"
 	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/user"
 	"github.com/df-mc/dragonfly/server/cmd"
@@ -78,7 +79,7 @@ func (s *UserService) Hook() error {
 		return errors.New("missing mongo client")
 	}
 
-	s.col = startup.Mongo.Database(startup.Config.MongoDB.DBName).Collection("users")
+	s.col = startup.Mongo.Database(config.DBConfig().DBName).Collection("users")
 
 	cur, err := s.col.Find(context.Background(), nil)
 	if err != nil {

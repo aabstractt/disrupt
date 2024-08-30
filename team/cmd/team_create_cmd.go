@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/bitrule/hcteams/config"
 	"github.com/bitrule/hcteams/service"
 	"github.com/bitrule/hcteams/startup/message"
 	"strings"
@@ -26,9 +27,9 @@ func (c TeamCreateCmd) Run(src cmd.Source, output *cmd.Output) {
 		output.Error(message.ErrTeamAlreadyExists.Build(c.Name))
 	} else if service.Team().LookupByMember(p.XUID()) != nil {
 		output.Error(message.ErrSelfAlreadyInTeam.Build())
-	} else if len(c.Name) > 16 {
+	} else if len(c.Name) > config.TeamConfig().Name.MaxLength {
 		output.Error(text.DarkRed + "Name cannot be longer than 16 characters.")
-	} else if len(c.Name) < 3 {
+	} else if len(c.Name) < config.TeamConfig().Name.MinLength {
 		output.Error(text.DarkRed + "Name cannot be shorter than 3 characters.")
 	} else {
 		go service.Team().Create(p, team.NewPlayerTeam(p.XUID(), c.Name))

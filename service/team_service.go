@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bitrule/hcteams/config"
 	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/startup/message"
 	"github.com/bitrule/hcteams/team"
@@ -203,14 +204,14 @@ func (s *TeamService) DisplayName(p *player.Player, t team.Team) string {
 	if pt, ok := t.(*team.PlayerTeam); ok {
 		// If the player is member, his role never will be undefined.
 		if pt.Member(p.XUID()) != team.Undefined {
-			return startup.Config.Teams.DisplayColourSameTeam + t.Tracker().Name()
+			return config.TeamConfig().Display.FriendlyColour + t.Tracker().Name()
 		}
 
 		if pt.HasInvite(p.XUID()) {
-			return startup.Config.Teams.DisplayColourInvited + t.Tracker().Name()
+			return config.TeamConfig().Display.InvitedColour + t.Tracker().Name()
 		}
 
-		return startup.Config.Teams.DisplayColourOpponent + t.Tracker().Name()
+		return config.TeamConfig().Display.EnemyColour + t.Tracker().Name()
 	}
 
 	return text.Red
@@ -275,7 +276,7 @@ func (s *TeamService) Hook() error {
 		return errors.New("repository already set")
 	}
 
-	s.col = startup.Mongo.Database(startup.Config.MongoDB.DBName).Collection("teams")
+	s.col = startup.Mongo.Database(config.DBConfig().DBName).Collection("teams")
 
 	cur, err := s.col.Find(context.TODO(), bson.M{})
 	if err != nil {

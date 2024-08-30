@@ -10,10 +10,11 @@ var (
 
 	SystemTeamType = "System"
 	PlayerTeamType = "Player"
-	Leader         = Role(0)
-	Officer        = Role(1)
-	Member         = Role(2)
-	Undefined      = Role(3)
+
+	Leader    = Role(0)
+	Officer   = Role(1)
+	Member    = Role(2)
+	Undefined = Role(3)
 )
 
 type Team interface {
