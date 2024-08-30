@@ -1,14 +1,18 @@
 package main
 
 import (
-	"github.com/bitrule/disrupt/service"
-	tcmd "github.com/bitrule/disrupt/team/cmd"
-	"github.com/df-mc/dragonfly/server/cmd"
-	"github.com/sirupsen/logrus"
-	"time"
+    "github.com/aabstractt/aurial/handler"
+    "github.com/bitrule/disrupt/service"
+    tcmd "github.com/bitrule/disrupt/team/cmd"
+    "github.com/df-mc/dragonfly/server"
+    "github.com/df-mc/dragonfly/server/cmd"
+    "github.com/df-mc/dragonfly/server/player"
+    "github.com/sirupsen/logrus"
+    "time"
 )
 
 func main() {
+    now := time.Now()
     log := logrus.New()
 
     if err := service.World().Hook(); err != nil {
@@ -38,4 +42,20 @@ func main() {
             service.User().DoTick()
         }
     }()
+
+    srv := server.New()
+    srv.Accept(func(p *player.Player) {
+        handler.Hook(p)
+    })
+
+    log.Infof("Server shutdown after %s", time.Since(now))
+
+    log.Info("Shutting down services...")
+
+    shutdownAt := time.Now()
+    if err := service.Team().Shutdown(); err != nil {
+        log.WithError(err).Panic("failed to shutdown team service")
+    } else {
+        log.Infof("Service for 'teams' has been shutdown in %s", time.Since(shutdownAt))
+    }
 }
