@@ -6,8 +6,6 @@ import (
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
 	"sync/atomic"
-
-	"github.com/google/uuid"
 )
 
 var (
@@ -99,13 +97,4 @@ func (t *Tracker) Unmarshal(prop map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-func EmptyTracker(name string, ownership string) *Tracker {
-	t := &Tracker{
-		id:   uuid.New().String(),
-		name: name,
-	}
-
-	return t
 }
