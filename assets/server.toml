@@ -1,0 +1,6 @@
+Network {
+    // The port the server will listen on.
+    Port = 8080
+    // The address the server will listen on.
+    Address = ""
+}
