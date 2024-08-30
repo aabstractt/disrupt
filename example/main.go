@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/bitrule/hcteams/service"
-	tcmd "github.com/bitrule/hcteams/team/cmd"
+	"github.com/bitrule/disrupt/service"
+	tcmd "github.com/bitrule/disrupt/team/cmd"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/sirupsen/logrus"
 	"time"

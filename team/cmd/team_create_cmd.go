@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/bitrule/hcteams/config"
-	"github.com/bitrule/hcteams/service"
-	"github.com/bitrule/hcteams/startup/message"
+	"github.com/bitrule/disrupt/config"
+	"github.com/bitrule/disrupt/service"
+	"github.com/bitrule/disrupt/startup/message"
 	"strings"
 
-	"github.com/bitrule/hcteams/team"
+	"github.com/bitrule/disrupt/team"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/sandertv/gophertunnel/minecraft/text"

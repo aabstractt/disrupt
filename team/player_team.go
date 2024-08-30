@@ -2,13 +2,13 @@ package team
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams"
+	"github.com/bitrule/disrupt"
 	"github.com/google/uuid"
 	"slices"
 	"sync"
 	"sync/atomic"
 
-	"github.com/bitrule/hcteams/team/tickable"
+	"github.com/bitrule/disrupt/team/tickable"
 )
 
 // PlayerTeam represents a team of players that contains a DTR tick and a bit more
@@ -84,7 +84,7 @@ func (t *PlayerTeam) Member(xuid string) Role {
 // Broadcast sends a message to all the team members
 func (t *PlayerTeam) Broadcast(message string) {
 	for xuid := range t.Members() {
-		if p, ok := HCTeams.SRV.PlayerByXUID(xuid); ok {
+		if p, ok := disrupt.SRV.PlayerByXUID(xuid); ok {
 			p.Message(message)
 		}
 	}

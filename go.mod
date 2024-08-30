@@ -1,4 +1,4 @@
-module github.com/bitrule/hcteams
+module github.com/bitrule/disrupt
 
 go 1.22
 

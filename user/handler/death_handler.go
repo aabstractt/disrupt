@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/bitrule/hcteams"
-	"github.com/bitrule/hcteams/service"
+	"github.com/bitrule/disrupt"
+	"github.com/bitrule/disrupt/service"
 	"github.com/df-mc/dragonfly/server/player"
 )
 
@@ -15,7 +15,7 @@ func RegisterDeathHandler() {
 func (deathHandler) HandleDeath(p *player.Player) {
 	u := service.User().LookupByXUID(p.XUID())
 	if u == nil {
-		HCTeams.Log.WithField("player", p.Name()).Errorf("death but %s has no user", p.Name())
+		disrupt.Log.WithField("player", p.Name()).Errorf("death but %s has no user", p.Name())
 
 		return
 	}

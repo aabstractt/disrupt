@@ -1,8 +1,8 @@
 package tickable
 
 import (
-	"github.com/bitrule/hcteams"
-	"github.com/bitrule/hcteams/service"
+	"github.com/bitrule/disrupt"
+	"github.com/bitrule/disrupt/service"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/player"
 	"time"
@@ -27,7 +27,7 @@ func (kt *KoTHTick) Remaining() time.Duration {
 func (kt *KoTHTick) Tick() {
 	t := service.Team().LookupById(kt.teamId)
 	if t == nil {
-		HCTeams.Log.Panic("KoTH team not found")
+		disrupt.Log.Panic("KoTH team not found")
 
 		return
 	}
@@ -35,13 +35,13 @@ func (kt *KoTHTick) Tick() {
 	for wName := range t.Tracker().Cuboids() {
 		w := service.World().LookupByName(wName)
 		if w == nil {
-			HCTeams.Log.WithField("world", wName).Error("KoTH world not found")
+			disrupt.Log.WithField("world", wName).Error("KoTH world not found")
 
 			continue
 		}
 
 		if kt.capturingBy != "" {
-			if p, ok := HCTeams.SRV.PlayerByXUID(kt.capturingBy); ok && p.World() == w && kt.bbox.Vec3Within(p.Position()) {
+			if p, ok := disrupt.SRV.PlayerByXUID(kt.capturingBy); ok && p.World() == w && kt.bbox.Vec3Within(p.Position()) {
 				return
 			}
 		}

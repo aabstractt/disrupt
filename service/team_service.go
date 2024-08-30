@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bitrule/hcteams"
-	"github.com/bitrule/hcteams/config"
-	"github.com/bitrule/hcteams/startup/message"
-	"github.com/bitrule/hcteams/team"
+	"github.com/bitrule/disrupt/config"
+	"github.com/bitrule/disrupt/startup/message"
+	"github.com/bitrule/disrupt/team"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"
 	"github.com/df-mc/dragonfly/server/world"
@@ -276,7 +275,7 @@ func (s *TeamService) Hook() error {
 		return errors.New("repository already set")
 	}
 
-	s.col = HCTeams.Mongo.Database(config.DBConfig().DBName).Collection("teams")
+	s.col = disrupt.Mongo.Database(config.DBConfig().DBName).Collection("teams")
 
 	cur, err := s.col.Find(context.TODO(), bson.M{})
 	if err != nil {

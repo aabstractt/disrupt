@@ -1,4 +1,4 @@
-package HCTeams
+package disrupt
 
 import (
 	"github.com/df-mc/dragonfly/server"

@@ -2,7 +2,7 @@ package team
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams/team/tickable"
+	"github.com/bitrule/disrupt/team/tickable"
 )
 
 type SystemTeam struct {

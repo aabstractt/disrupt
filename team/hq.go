@@ -2,7 +2,7 @@ package team
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams/service"
+	"github.com/bitrule/disrupt/service"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/world"
