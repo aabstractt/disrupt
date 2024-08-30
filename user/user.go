@@ -7,13 +7,9 @@ import (
 // New creates an empty user
 func New(xuid, name string) *User {
 	return &User{
-		xuid: xuid,
-		name: name,
-		tracker: &Tracker{
-			kills:   0,
-			deaths:  0,
-			assists: 0,
-		},
+		xuid:    xuid,
+		name:    name,
+		tracker: &Tracker{},
 	}
 }
 
@@ -52,20 +48,20 @@ func (u *User) Tracker() *Tracker {
 }
 
 // Unmarshal unmarshals the user from a map
-func (u *User) Unmarshal(prop map[string]interface{}) error {
-	xuid, ok := prop["xuid"].(string)
+func (u *User) Unmarshal(body map[string]interface{}) error {
+	xuid, ok := body["xuid"].(string)
 	if !ok {
 		return errors.New("missing user XUID")
 	}
 	u.xuid = xuid
 
-	name, ok := prop["name"].(string)
+	name, ok := body["name"].(string)
 	if !ok {
 		return errors.New("missing user name")
 	}
 	u.name = name
 
-	trackerData, ok := prop["tracker"].(map[string]interface{})
+	trackerData, ok := body["tracker"].(map[string]interface{})
 	if !ok {
 		return errors.New("missing user tracker")
 	}
