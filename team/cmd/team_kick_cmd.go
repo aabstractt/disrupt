@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/bitrule/disrupt/message"
 	"github.com/bitrule/disrupt/service"
-	"github.com/bitrule/disrupt/startup/message"
 	"github.com/bitrule/disrupt/team"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"

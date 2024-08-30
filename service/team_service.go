@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bitrule/disrupt/config"
-	"github.com/bitrule/disrupt/startup/message"
+	"github.com/bitrule/disrupt/message"
 	"github.com/bitrule/disrupt/team"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"
