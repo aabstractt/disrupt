@@ -47,13 +47,13 @@ func (t *Tracker) TeamType() string {
 }
 
 // Balance returns the team's balance
-func (t *Tracker) Balance() atomic.Int32 {
-	return t.balance
+func (t *Tracker) Balance() int32 {
+	return t.balance.Load()
 }
 
 // Points returns the team's points
-func (t *Tracker) Points() atomic.Int32 {
-	return t.points
+func (t *Tracker) Points() int32 {
+	return t.points.Load()
 }
 
 // Option returns the team's option
