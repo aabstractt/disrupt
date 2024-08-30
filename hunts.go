@@ -1,4 +1,4 @@
-package startup
+package HCTeams
 
 import (
 	"github.com/df-mc/dragonfly/server"

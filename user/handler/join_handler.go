@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"github.com/bitrule/hcteams"
 	"github.com/bitrule/hcteams/service"
-	"github.com/bitrule/hcteams/startup"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 )
@@ -19,7 +19,7 @@ func (userJoinHandler) HandleJoin(p *player.Player) {
 			if err := service.User().Create(p.XUID(), p.Name()); err != nil {
 				p.Disconnect(text.Red + "An error occurred while creating your user.\n" + text.Yellow + "Please try again later.")
 
-				startup.Log.Error(err)
+				HCTeams.Log.Error(err)
 			}
 		}()
 	}

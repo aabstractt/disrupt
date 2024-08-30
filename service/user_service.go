@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/bitrule/hcteams"
 	"github.com/bitrule/hcteams/config"
-	"github.com/bitrule/hcteams/startup"
 	"github.com/bitrule/hcteams/user"
 	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/player"
@@ -75,11 +75,11 @@ func (s *UserService) Hook() error {
 		return errors.New("repository already hooked")
 	}
 
-	if startup.Mongo == nil {
+	if HCTeams.Mongo == nil {
 		return errors.New("missing mongo client")
 	}
 
-	s.col = startup.Mongo.Database(config.DBConfig().DBName).Collection("users")
+	s.col = HCTeams.Mongo.Database(config.DBConfig().DBName).Collection("users")
 
 	cur, err := s.col.Find(context.Background(), nil)
 	if err != nil {
@@ -104,7 +104,7 @@ func (s *UserService) Hook() error {
 		return errors.Join(errors.New("failed to close the cursor: "), err)
 	}
 
-	startup.Log.Infof("Successfully loaded %d user(s)", len(s.users))
+	HCTeams.Log.Infof("Successfully loaded %d user(s)", len(s.users))
 
 	return nil
 }

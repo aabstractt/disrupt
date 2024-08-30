@@ -2,7 +2,7 @@ package team
 
 import (
 	"errors"
-	"github.com/bitrule/hcteams/startup"
+	"github.com/bitrule/hcteams"
 	"github.com/google/uuid"
 	"slices"
 	"sync"
@@ -84,7 +84,7 @@ func (t *PlayerTeam) Member(xuid string) Role {
 // Broadcast sends a message to all the team members
 func (t *PlayerTeam) Broadcast(message string) {
 	for xuid := range t.Members() {
-		if p, ok := startup.SRV.PlayerByXUID(xuid); ok {
+		if p, ok := HCTeams.SRV.PlayerByXUID(xuid); ok {
 			p.Message(message)
 		}
 	}
