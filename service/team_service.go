@@ -113,12 +113,12 @@ func (s *TeamService) LookupAt(w *world.World, vec3 mgl64.Vec3) team.Team {
 	}
 
 	for _, t := range teamsPerChunk {
-		bboxes := t.Tracker().Cuboids()[w.Name()]
-		if bboxes == nil {
+		bBoxes := t.Tracker().Cuboids()[w.Name()]
+		if bBoxes == nil {
 			continue
 		}
 
-		for _, bbox := range bboxes {
+		for _, bbox := range bBoxes {
 			if bbox.Vec3Within(vec3) {
 				return t
 			}
