@@ -216,27 +216,6 @@ func (s *TeamService) DisplayName(p *player.Player, t team.Team) string {
 	return text.Red
 }
 
-// Invite invites a player to a team.
-// This function will add the player to the team's invites and broadcast a message to the player and the team.
-// The target can accept the invite by using the '/team accept' command or decline it by using the '/team decline' command.
-// I think this function should be removed because its only used one time in the codebase.
-func (s *TeamService) Invite(t *team.PlayerTeam, p *player.Player) error {
-	if t.Member(p.XUID()) == team.Undefined {
-		return errors.New(message.ErrPlayerAlreadyMember.Build(p.Name()))
-	} else if s.LookupByMember(p.XUID()) != nil {
-		return errors.New(message.ErrPlayerAlreadyInTeam.Build(p.Name()))
-	} else if t.HasInvite(p.XUID()) {
-		return errors.New(message.ErrPlayerAlreadyInvited.Build(p.Name()))
-	}
-
-	t.AddInvite(p.XUID())
-
-	p.Message(message.SuccessTeamInviteReceived.Build(p.Name(), t.Tracker().Name()))
-	t.Broadcast(message.SuccessBroadcastTeamInviteSent.Build(p.Name(), t.Tracker().Name()))
-
-	return nil
-}
-
 // Disband disbands a team
 // This function will delete the team from the repository and broadcast a message to all the members.
 // also, it will delete all the members from the team and the service.

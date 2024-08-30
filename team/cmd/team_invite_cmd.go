@@ -24,9 +24,18 @@ func (c TeamInviteCmd) Run(src cmd.Source, output *cmd.Output) {
 		output.Error(message.ErrSelfNotInTeam.Build())
 	} else if r.LowestThan(team.Officer) { // Check if the player is an officer or higher, if not, return an error
 		output.Error(message.ErrSelfNotOfficer.Build())
-	} else if err := service.Team().Invite(t, p); err != nil {
-		output.Error(err)
+	} else if t.Member(p.XUID()) != team.Undefined {
+		output.Error(message.ErrPlayerAlreadyMember.Build(p.Name()))
+	} else if service.Team().LookupByMember(p.XUID()) != nil {
+		output.Error(message.ErrPlayerAlreadyInTeam.Build(p.Name()))
+	} else if t.HasInvite(p.XUID()) {
+		output.Error(message.ErrPlayerAlreadyInvited.Build(p.Name()))
 	} else {
+		t.Broadcast(message.SuccessBroadcastTeamInviteSent.Build(p.Name(), t.Tracker().Name()))
+		p.Message(message.SuccessTeamInviteReceived.Build(p.Name(), t.Tracker().Name()))
+
 		s.Message(message.SuccessTeamInviteSent.Build(p.Name()))
+
+		t.AddInvite(p.XUID())
 	}
 }
