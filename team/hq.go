@@ -17,6 +17,7 @@ type HQ struct {
     loaded bool
 }
 
+// NewHQ returns a new HQ with the given world, position, and rotation.
 func NewHQ(w *world.World, pos mgl64.Vec3, rot cube.Rotation) HQ {
     return HQ{w, pos, rot, true}
 }
@@ -36,6 +37,7 @@ func (h HQ) Rotation() cube.Rotation {
     return h.rot
 }
 
+// Marshal marshals the HQ to a map.
 func (h HQ) Marshal() map[string]interface{} {
     return map[string]interface{}{
         "world": h.w.Name(),
@@ -44,6 +46,7 @@ func (h HQ) Marshal() map[string]interface{} {
     }
 }
 
+// Unmarshal unmarshals the HQ from the given map.
 func (h HQ) Unmarshal(body map[string]interface{}) error {
     wName, ok := body["world"].(string)
     if !ok {
