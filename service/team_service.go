@@ -170,6 +170,29 @@ func (s *TeamService) cache(t team.Team) {
     s.teamIdsMu.Unlock()
 }
 
+// DisplayName returns the display name of a team.
+// This function will return the display name of a team based on the player's role in the team.
+func (s *TeamService) DisplayName(p *player.Player, t team.Team) string {
+    if v, ok := t.Tracker().Option(team.DisplayNameKeyOption).(string); ok {
+        return v
+    }
+
+    if pt, ok := t.(*team.PlayerTeam); ok {
+        // If the player is member, his role never will be undefined.
+        if pt.Member(p.XUID()) != team.Undefined {
+            return config.TeamConfig().Display.FriendlyColour + t.Tracker().Name()
+        }
+
+        if pt.HasInvite(p.XUID()) {
+            return config.TeamConfig().Display.InvitedColour + t.Tracker().Name()
+        }
+
+        return config.TeamConfig().Display.EnemyColour + t.Tracker().Name()
+    }
+
+    return text.Red
+}
+
 // Create creates a team.
 // Use this function into a goroutine to prevent blocking the main thread.
 func (s *TeamService) Create(p *player.Player, t team.Team) {
@@ -194,29 +217,6 @@ func (s *TeamService) Create(p *player.Player, t team.Team) {
     }
 }
 
-// DisplayName returns the display name of a team.
-// This function will return the display name of a team based on the player's role in the team.
-func (s *TeamService) DisplayName(p *player.Player, t team.Team) string {
-    if v, ok := t.Tracker().Option(team.DisplayNameKeyOption).(string); ok {
-        return v
-    }
-
-    if pt, ok := t.(*team.PlayerTeam); ok {
-        // If the player is member, his role never will be undefined.
-        if pt.Member(p.XUID()) != team.Undefined {
-            return config.TeamConfig().Display.FriendlyColour + t.Tracker().Name()
-        }
-
-        if pt.HasInvite(p.XUID()) {
-            return config.TeamConfig().Display.InvitedColour + t.Tracker().Name()
-        }
-
-        return config.TeamConfig().Display.EnemyColour + t.Tracker().Name()
-    }
-
-    return text.Red
-}
-
 // Disband disbands a team
 // This function will delete the team from the repository and broadcast a message to all the members.
 // also, it will delete all the members from the team and the service.
@@ -236,6 +236,8 @@ func (s *TeamService) Disband(t *team.PlayerTeam) error {
         for xuid := range t.Members() {
             s.DeleteMember(xuid)
         }
+
+        s.Delete(t.Tracker().Id())
     }
 
     return nil
@@ -248,11 +250,11 @@ func (s *TeamService) Save(t team.Team) error {
 
     r, err := s.col.UpdateOne(context.TODO(), bson.M{IDKey: t.Tracker().Id()}, bson.M{"$set": t.Marshal()})
     if err != nil {
-        return errors.New("failed to save the team: " + err.Error())
+        return err
     }
 
     if r.MatchedCount == 0 && r.UpsertedCount == 0 {
-        return errors.New("failed to save the team: no documents matched the filter")
+        return errors.New("no documents matched the filter")
     }
 
     return nil
@@ -280,7 +282,7 @@ func (s *TeamService) Hook() error {
 
     cur, err := s.col.Find(context.TODO(), bson.M{})
     if err != nil {
-        return errors.New("failed to hook the repository: " + err.Error())
+        return errors.Join(errors.New("failed to hook the repository: "), err)
     }
 
     for cur.Next(context.Background()) {
@@ -297,6 +299,10 @@ func (s *TeamService) Hook() error {
         s.cache(t)
     }
 
+    if err = cur.Close(context.Background()); err != nil {
+        return errors.Join(errors.New("failed to close the cursor: "), err)
+    }
+
     return nil
 }
 
@@ -311,7 +317,7 @@ func (s *TeamService) Shutdown() error {
 
     for _, t := range s.teams {
         if err := s.Save(t); err != nil {
-            return errors.New("failed to save the team: " + err.Error())
+            return errors.New("failed to save the team '" + t.Tracker().Name() + "': " + err.Error())
         }
     }
 
