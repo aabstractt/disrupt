@@ -231,11 +231,11 @@ func (s *TeamService) Disband(t *team.PlayerTeam) error {
     } else if r.DeletedCount == 0 {
         return errors.New("team not found into our database")
     } else {
-        t.Broadcast(message.SuccessTeamDisband.Build(u.Name(), t.Tracker().Name()))
-
         for xuid := range t.Members() {
             s.DeleteMember(xuid)
         }
+
+        t.Broadcast(message.SuccessTeamDisband.Build(u.Name(), t.Tracker().Name()))
 
         s.Delete(t.Tracker().Id())
     }
