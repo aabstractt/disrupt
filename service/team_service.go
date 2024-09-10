@@ -85,13 +85,13 @@ func (s *TeamService) LookupByChunk(w *world.World, vec3 mgl64.Vec3) []team.Team
 	s.teamsPerChunkMu.RLock()
 	defer s.teamsPerChunkMu.RUnlock()
 
-	chunks := s.teamsPerChunk[w.Name()]
-	if chunks == nil {
+	chunks, ok := s.teamsPerChunk[w.Name()]
+	if !ok || chunks == nil {
 		return nil
 	}
 
-	teamIds := chunks[world.ChunkPos{int32(math.Floor(vec3[0])) >> 4, int32(math.Floor(vec3[2])) >> 4}]
-	if teamIds == nil {
+	teamIds, ok := chunks[world.ChunkPos{int32(math.Floor(vec3[0])) >> 4, int32(math.Floor(vec3[2])) >> 4}]
+	if !ok || teamIds == nil {
 		return nil
 	}
 
@@ -115,8 +115,8 @@ func (s *TeamService) LookupAt(w *world.World, vec3 mgl64.Vec3) team.Team {
 	}
 
 	for _, t := range teamsPerChunk {
-		bBoxes := t.Tracker().Cuboids()[w.Name()]
-		if bBoxes == nil {
+		bBoxes, ok := t.Tracker().Cuboids()[w.Name()]
+		if !ok || bBoxes == nil {
 			continue
 		}
 
@@ -329,14 +329,23 @@ func (s *TeamService) Shutdown() error {
 	s.teamsMu.RLock()
 	defer s.teamsMu.RUnlock()
 
+	systemCount := 0
+	playerCount := 0
+
 	for _, t := range s.teams {
 		if err := s.Save(t); err != nil {
 			return errors.New("failed to save the team '" + t.Tracker().Name() + "': " + err.Error())
 		}
+
+		if _, ok := t.(*team.SystemTeam); ok {
+			systemCount++
+		} else {
+			playerCount++
+		}
 	}
 
-	disrupt.Log.Infof("Successfully saved %d 'admin' team(s) in our database", len(s.teams))
-	disrupt.Log.Infof("Successfully saved %d 'player' team(s) in our database", len(s.teams))
+	disrupt.Log.Infof("Successfully saved %d 'player' team(s) in our database", playerCount)
+	disrupt.Log.Infof("Successfully saved %d 'admin' team(s) in our database", systemCount)
 
 	return nil
 }
